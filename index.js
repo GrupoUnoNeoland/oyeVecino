@@ -8,9 +8,8 @@ dotenv.config();
 
 connect();
 
-//const { configCloudinary } = require("./src/middleware/files.middleware");
-
-//configCloudinary();
+const { configCloudinary } = require("./src/middleware/files.middleware");
+configCloudinary();
 
 const PORT = process.env.PORT;
 
