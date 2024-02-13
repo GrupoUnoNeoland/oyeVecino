@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const EventosSchema = new mongoose.Schema(
+const EventsSchema = new mongoose.Schema(
   {
-    tituloEventos: {
+    tituloEvents: {
       type: String,
       required: true,
       trim: true,
@@ -42,13 +42,15 @@ const EventosSchema = new mongoose.Schema(
     recipientComents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
     recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientBarrios: [{ type: mongoose.Schema.Types.ObjectId, ref: "Barrio" }],
+    recipientNeighborhood: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-const Eventos = mongoose.model("Eventos", EventosSchema);
+const Events = mongoose.model("Events", EventsSchema);
 
 module.exports = Eventos;

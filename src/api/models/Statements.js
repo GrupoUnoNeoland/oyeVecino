@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ComunicadosSchema = new mongoose.Schema(
+const statementsSchema = new mongoose.Schema(
   {
     tituloServicio: {
       type: String,
@@ -25,13 +25,15 @@ const ComunicadosSchema = new mongoose.Schema(
     recipientComents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
     recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientBarrios: [{ type: mongoose.Schema.Types.ObjectId, ref: "Barrio" }],
+    recipientNeighborhood: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-const Comunicados = mongoose.model("Comunicados", ComunicadosSchema);
+const statements = mongoose.model("Statements", statementsSchema);
 
-module.exports = Comunicados;
+module.exports = statements;
