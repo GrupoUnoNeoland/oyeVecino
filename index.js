@@ -25,6 +25,9 @@ app.use("/api/v1/users/", UserRoutes);
 const EventRoutes = require("./src/api/routes/Event.routes");
 app.use("/api/v1/events/", EventRoutes);
 
+const StatementRoutes = require("./src/api/routes/Statement.routes");
+app.use("/api/v1/statements/", StatementRoutes);
+
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
   error.status = 404;

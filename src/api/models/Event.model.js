@@ -39,14 +39,13 @@ const EventSchema = new mongoose.Schema(
       required: false,
     },
 
-    recipientComments: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
-    ],
-    recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
-    recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientNeighborhoods: [
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
+    sponsors: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   {
     timestamps: true,
