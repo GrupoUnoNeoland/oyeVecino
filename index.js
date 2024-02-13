@@ -22,6 +22,9 @@ app.use(express.urlencoded({ limit: "5mb", extended: false }));
 //const UserRoutes = require("./src/api/routes/User.routes");
 //app.use("/api/v1/users/", UserRoutes);
 
+const ServiceRoutes = require("./src/api/routes/Service.routes");
+app.use("/api/v1/services/", ServiceRoutes);
+
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
   error.status = 404;
