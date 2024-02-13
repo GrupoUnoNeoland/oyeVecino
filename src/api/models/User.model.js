@@ -47,6 +47,7 @@ const UserSchema = new mongoose.Schema(
     },
     document: {
       type: String,
+      required: true,
     },
     adressChecked: {
       type: Boolean,
@@ -75,7 +76,7 @@ const UserSchema = new mongoose.Schema(
     },
     rol: {
       type: String,
-      enum: ["vecino", "admin", "superadmin"],
+      enum: ["vecino", "admin", "superAdmin"],
       default: "vecino",
     },
     confirmationCode: {
@@ -114,6 +115,6 @@ UserSchema.pre('save', async function (next) {
   }
 })
 
-const User = mongoose.model("Usuario", UserSchema);
+const User = mongoose.model("User", UserSchema);
 
 module.exports = User;
