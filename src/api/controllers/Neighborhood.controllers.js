@@ -418,7 +418,7 @@ const toggleStatements = async (req, res, next) => {
               });
 
               try {
-                await St.findByIdAndUpdate(statement, {
+                await Statement.findByIdAndUpdate(statement, {
                   $pull: { neighborhoods: id },
                 });
               } catch (error) {
