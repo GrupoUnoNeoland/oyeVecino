@@ -22,10 +22,10 @@ const ComunicadosSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    recipientComent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    recipientComents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
+    recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientBarrio: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    recipientBarrios: [{ type: mongoose.Schema.Types.ObjectId, ref: "Barrio" }],
   },
   {
     timestamps: true,

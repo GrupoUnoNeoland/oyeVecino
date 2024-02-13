@@ -39,10 +39,10 @@ const EventosSchema = new mongoose.Schema(
       required: false,
     },
 
-    recipientComent: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
+    recipientComents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
     recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientBarrio: [{ type: mongoose.Schema.Types.ObjectId, ref: "Barrio" }],
+    recipientBarrios: [{ type: mongoose.Schema.Types.ObjectId, ref: "Barrio" }],
   },
   {
     timestamps: true,
