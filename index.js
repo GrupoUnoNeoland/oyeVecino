@@ -19,8 +19,8 @@ app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: false }));
 
-//const UserRoutes = require("./src/api/routes/User.routes");
-//app.use("/api/v1/users/", UserRoutes);
+const UserRoutes = require("./src/api/routes/User.routes");
+app.use("/api/v1/users/", UserRoutes);
 
 const EventRoutes = require("./src/api/routes/Event.routes");
 app.use("/api/v1/events/", EventRoutes);
