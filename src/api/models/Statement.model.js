@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const EventsSchema = new mongoose.Schema(
+const statementSchema = new mongoose.Schema(
   {
-    tituloEvents: {
+    title: {
       type: String,
       required: true,
       trim: true,
@@ -13,7 +13,7 @@ const EventsSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    direccion: {
+    content: {
       type: String,
       required: true,
     },
@@ -22,27 +22,12 @@ const EventsSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    fecha: {
-      type: String,
-      required: true,
-    },
-    horario: {
-      type: String,
-      required: true,
-    },
-    precio: {
-      type: Number,
-      required: false,
-    },
-    organizadores: {
-      type: String,
-      required: false,
-    },
-
-    recipientComents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Coment" }],
+    recipientComments: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
+    ],
     recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientNeighborhood: [
+    recipientNeighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
   },
@@ -51,6 +36,6 @@ const EventsSchema = new mongoose.Schema(
   }
 );
 
-const Events = mongoose.model("Events", EventsSchema);
+const Statement = mongoose.model("Statement", statementSchema);
 
-module.exports = Eventos;
+module.exports = Statement;
