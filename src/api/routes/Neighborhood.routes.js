@@ -6,6 +6,8 @@ const {
   updateNeighborhood,
   toggleUsers,
   toggleServices,
+  toggleEvents,
+  toggleStatements,
 } = require("../controllers/Neighborhood.controllers");
 const express = require("express");
 
@@ -20,6 +22,8 @@ NeighborhoodRoutes.patch(
   updateNeighborhood
 );
 NeighborhoodRoutes.patch("/add/:id", toggleUsers);
-NeighborhoodRoutes.patch("add/services/:id");
+NeighborhoodRoutes.patch("/add/services/:id", toggleServices);
+NeighborhoodRoutes.patch("/add/events/:id", toggleEvents);
+NeighborhoodRoutes.patch("/add/statements/:id", toggleStatements);
 
 module.exports = NeighborhoodRoutes;

@@ -1,5 +1,8 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Event = require("../models/Event.model");
 const Neighborhood = require("../models/Neighborhood.model");
+const Service = require("../models/Service.model");
+const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
 // --------------------------------------------------------------------------------
@@ -256,7 +259,7 @@ const toggleServices = async (req, res, next) => {
               });
 
               try {
-                await User.findByIdAndUpdate(service, {
+                await Service.findByIdAndUpdate(service, {
                   $pull: { neighborhoods: id },
                 });
               } catch (error) {
@@ -278,7 +281,7 @@ const toggleServices = async (req, res, next) => {
               });
               try {
                 console.log(service);
-                await User.findByIdAndUpdate(service, {
+                await Service.findByIdAndUpdate(service, {
                   $push: { neighborhoods: id },
                 });
               } catch (error) {
@@ -315,6 +318,164 @@ const toggleServices = async (req, res, next) => {
   }
 };
 
+//-----------------------------------toggle EVENTS
+
+const toggleEvents = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { events } = req.body;
+
+    const neighborhoodById = await Neighborhood.findById(id);
+    console.log(id);
+    if (neighborhoodById) {
+      const arrayIdevents = events.split(",");
+
+      await Promise.all(
+        arrayIdevents.map(async (event) => {
+          if (neighborhoodById.events.includes(event)) {
+            try {
+              await Neighborhood.findByIdAndUpdate(id, {
+                $pull: { events: event },
+              });
+
+              try {
+                await Event.findByIdAndUpdate(event, {
+                  $pull: { neighborhoods: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update event",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhood",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Neighborhood.findByIdAndUpdate(id, {
+                $push: { events: event },
+              });
+              try {
+                await Event.findByIdAndUpdate(event, {
+                  $push: { neighborhoods: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update event",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhood",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Neighborhood.findById(id).populate("events"),
+          });
+        });
+    } else {
+      return res.status(404).json("neighborhood not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+//---------------------------toggle Statements
+
+const toggleStatements = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { statements } = req.body;
+
+    const neighborhoodById = await Neighborhood.findById(id);
+    console.log(id);
+    if (neighborhoodById) {
+      const arrayIdstatements = statements.split(",");
+
+      await Promise.all(
+        arrayIdstatements.map(async (statement) => {
+          if (neighborhoodById.statements.includes(statement)) {
+            try {
+              await Neighborhood.findByIdAndUpdate(id, {
+                $pull: { statements: statement },
+              });
+
+              try {
+                await St.findByIdAndUpdate(statement, {
+                  $pull: { neighborhoods: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update event",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhood",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Neighborhood.findByIdAndUpdate(id, {
+                $push: { statements: statement },
+              });
+              try {
+                await Statement.findByIdAndUpdate(statement, {
+                  $push: { neighborhoods: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statement",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhood",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Neighborhood.findById(id).populate("statements"),
+          });
+        });
+    } else {
+      return res.status(404).json("neighborhood not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createNeighborhood,
   deleteNeighborhood,
@@ -322,4 +483,6 @@ module.exports = {
   updateNeighborhood,
   toggleUsers,
   toggleServices,
+  toggleEvents,
+  toggleStatements,
 };
