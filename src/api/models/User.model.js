@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema(
     cif: {
       type: String,
       trim: true,
-      unique: true,
+      // unique: true,
     },
     password: {
       type: String,
@@ -97,9 +97,9 @@ const UserSchema = new mongoose.Schema(
     postedMessages: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
     chats: [{ type: mongoose.Schema.Types.ObjectId, ref: "Chat" }],
     statements: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
-    servicesFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
     eventsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     statementsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
+    spondoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
   },
   {
     timestamps: true,
