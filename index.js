@@ -22,6 +22,16 @@ app.use(express.urlencoded({ limit: "5mb", extended: false }));
 const UserRoutes = require("./src/api/routes/User.routes");
 app.use("/api/v1/users/", UserRoutes);
 
+const EventRoutes = require("./src/api/routes/Event.routes");
+app.use("/api/v1/events/", EventRoutes);
+
+const StatementRoutes = require("./src/api/routes/Statement.routes");
+app.use("/api/v1/statements/", StatementRoutes);
+const NeighborhoodRoutes = require("./src/api/routes/Neighborhood.routes");
+app.use("/api/v1/neighborhoods/", NeighborhoodRoutes);
+const ServiceRoutes = require("./src/api/routes/Service.routes");
+app.use("/api/v1/services/", ServiceRoutes);
+
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
   error.status = 404;

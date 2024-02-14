@@ -13,21 +13,17 @@ const statementSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    content: {
-      type: String,
-      required: true,
-    },
+
     images: [
       {
         type: String,
       },
     ],
-    recipientComments: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
-    ],
-    recipientLikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
-    recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientNeighborhoods: [
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+    neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
   },
