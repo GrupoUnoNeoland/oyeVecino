@@ -57,22 +57,32 @@ const deleteEvent = async (req, res, next) => {
         console.log(test);
 
         try {
-          await User.updateMany({ eventFav: id }, { $pull: { eventFav: id } });
-
+          const testDeleteUser = await User.updateMany(
+            { event: id },
+            { $pull: { event: id } }
+          );
+          try {
+            const testDeleteEventsFav = await User.updateMany(
+              { eventsFav: id },
+              { $pull: { eventsFav: id } }
+            );
+            try {
+              const testDeleteComents = await User.updateMany(
+                { comment: id },
+                { $pull: { comment: id } }
+              );
+            } catch (error) {}
+          } catch (error) {
+            return res.satatus(404).json("eventsFav not deleted");
+          }
           return res.status(finByIdevent ? 404 : 200).json({
             deleteTest: finByIdevent ? false : true,
           });
         } catch (error) {
-          return res.status(404).json({
-            error: "error catch update User",
-            message: error.message,
-          });
+          return res.status(404).json("error catch update User");
         }
       } catch (error) {
-        return res.status(404).json({
-          error: "error catch update event",
-          message: error.message,
-        });
+        return res.status(404).json("error catch update event");
       }
     }
   } catch (error) {
@@ -99,8 +109,25 @@ const getAllEvent = async (req, res, next) => {
   }
 };
 
+//!------------------getByIdEvent-----------------------
+
+const getByIdEvent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      return res.status(200).json(eventById);
+    } else {
+      return res.status(404).json("no se ha encontrado el evento");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
 module.exports = {
   createEvent,
   deleteEvent,
   getAllEvent,
+  getByIdEvent,
 };

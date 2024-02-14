@@ -145,11 +145,11 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
-*/ 
+*/
 
 const updateServices = async (req, res, next) => {
   await Service.syncIndexes();
-  let catchImg = req?.files.map((file) =>.path);
+  let catchImg = req?.files.map((file) => file.path);
   try {
     const { id } = req.params;
     const characterById = await Character.findById(id);

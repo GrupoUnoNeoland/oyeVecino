@@ -1,6 +1,7 @@
 //!-----CREATE STATEMENT-----
 
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Neighborhood = require("../models/Neighborhood.model");
 const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
@@ -45,7 +46,6 @@ const deleteStatement = async (req, res, next) => {
     const { id } = req.params;
     const statement = await Statement.findByIdAndDelete(id);
     if (statement) {
-      // lo buscamos para ver si sigue existiendo o no
       const finByIdstatement = await Statement.findById(id);
 
       try {
@@ -88,8 +88,8 @@ const getAllStatement = async (req, res, next) => {
   try {
     const getAllStatement = await Statement.find();
     /** el find nos devuelve un array */
-    if (allstatement.length > 0) {
-      return res.status(200).json(allstatement);
+    if (getAllStatement.length > 0) {
+      return res.status(200).json(getAllStatement);
     } else {
       return res.status(404).json("no se han encontrado statement");
     }
@@ -101,8 +101,183 @@ const getAllStatement = async (req, res, next) => {
   }
 };
 
+//!------------------getByIdStatement-----------------------
+
+const getByIdStatement = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const statementById = await Statement.findById(id);
+    if (statementById) {
+      return res.status(200).json(statementById);
+    } else {
+      return res.status(404).json("no se ha encontrado el statement");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
+//!-----------------------toggleUser en Statement-------------------
+
+const toggleUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { users } = req.body;
+    const statementById = await Statement.findById(id);
+
+    if (statementById) {
+      const arrayIduser = users.split(",");
+
+      Promise.all(
+        arrayIduser.map(async (user, index) => {
+          if (statementById.users.includes(user)) {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $pull: { users: user },
+              });
+
+              try {
+                await User.findByIdAndUpdate(user, {
+                  $pull: { statements: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update user",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update statement",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $push: { users: user },
+              });
+              try {
+                await User.findByIdAndUpdate(user, {
+                  $push: { statements: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update user",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update statement",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Statement.findById(id).populate("users"),
+          });
+        });
+    } else {
+      return res.status(404).json("este statement no existe");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+//!-----------------------toggleNeighborhood en Statement-------------------
+
+const toggleNeighborhood = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { neighborhood } = req.body;
+    const statementById = await Statement.findById(id);
+
+    if (statementById) {
+      const arrayIdNeighborhood = neighborhood.split(",");
+
+      Promise.all(
+        arrayIdNeighborhood.map(async (neighborhood, index) => {
+          if (statementById.neighborhood.includes(neighborhood)) {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $pull: { neighborhood: neighborhood },
+              });
+
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $pull: { statement: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update neighborhood",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update statement",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $push: { neighborhood: neighborhood },
+              });
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $push: { statement: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update neighborhood",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update statement",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Statement.findById(id).populate("neighborhood"),
+          });
+        });
+    } else {
+      return res.status(404).json("este statement no existe");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createStatement,
   deleteStatement,
   getAllStatement,
+  getByIdStatement,
+  toggleUser,
+  toggleNeighborhood,
 };
