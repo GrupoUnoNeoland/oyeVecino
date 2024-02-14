@@ -7,7 +7,7 @@ const User = require("../models/User.model");
 
 //-----------------------------------------------------------------------------
 
-const createMessagePrivate = async (req, res, next) => {
+const createMessage = async (req, res, next) => {
   try {
     const { owner, type, content, images } = req.body;
     const { id } = req.params;
@@ -364,10 +364,7 @@ const createMessageEvent = () => {};
 //-----------------------------------
 
 module.exports = {
-  createMessagePrivate,
-  createMessageStatement,
-  createMessageService,
-  createMessageEvent,
+  createMessage,
   updateMessage,
   deleteMessege,
   getAllMessages,
