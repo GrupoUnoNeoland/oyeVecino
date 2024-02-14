@@ -44,30 +44,33 @@ const deleteNeighborhood = async (req, res, next) => {
 
     const image = NeighborhoodDelete.image;
     await Neighborhood.findByIdAndDelete(id);
+    deleteImgCloudinary(image);
     if (await Neighborhood.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
       try {
-        const testDeleteUser = await User.updateMany(
+        await User.updateMany(
           { neighborhoods: id },
           { $pull: { neighborhoods: id } }
         );
         try {
-          const testDeleteService = await Service.updateMany(
+          await Service.updateMany(
             { neighborhoods: id },
             { $pull: { neighborhoods: id } }
           );
 
           try {
-            const testDeleteEvent = await Event.updateMany(
+            await Event.updateMany(
               { neighborhoods: id },
               { $pull: { neighborhoods: id } }
             );
             try {
-              const testDeleteStatement = await Statement.updateMany(
+              await Statement.updateMany(
                 { neighborhoods: id },
                 { $pull: { neighborhoods: id } }
               );
+
+              return res.status(200).json("neighborhood in service deleted ok");
             } catch (error) {
               return res
                 .status(404)
@@ -76,16 +79,12 @@ const deleteNeighborhood = async (req, res, next) => {
           } catch (error) {
             return res.status(404).json("event in neighborhood not deleted");
           }
-          return res.status(202).json("neighborhood in service deleted ok");
         } catch (error) {
           ("user in neighborhood not deleted");
         }
-        return res.status(202).json("neighborhood in user deleted ok");
       } catch (error) {
         return res.status(404).json("user in neighborhood not deleted");
       }
-      deleteImgCloudinary(image);
-      return res.status(200).json("ok delete");
     }
   } catch (error) {
     return next(error);

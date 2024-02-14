@@ -99,7 +99,7 @@ const UserSchema = new mongoose.Schema(
     statements: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
     eventsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     statementsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
-    spondoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    sponsoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
   },
   {
     timestamps: true,
