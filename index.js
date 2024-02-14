@@ -24,6 +24,7 @@ app.use("/api/v1/users/", UserRoutes);
 
 const NeighborhoodRoutes = require("./src/api/routes/Neighborhood.routes");
 app.use("/api/v1/neighborhoods/", NeighborhoodRoutes);
+
 const ServiceRoutes = require("./src/api/routes/Service.routes");
 app.use("/api/v1/services/", ServiceRoutes);
 
