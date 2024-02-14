@@ -32,6 +32,7 @@ const MessageSchema = new mongoose.Schema(
     recipientStatements: [
       { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     ],
+    services: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
   },
   {
     timestamps: true,
