@@ -36,7 +36,6 @@ const createNeighborhood = async (req, res, next) => {
   }
 };
 //-------------------------------------------------------------------------------------------------------
-// todo ---------INCLUIR PULL DE USER DE BARRIOS
 
 const deleteNeighborhood = async (req, res, next) => {
   try {
@@ -48,6 +47,43 @@ const deleteNeighborhood = async (req, res, next) => {
     if (await Neighborhood.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
+      try {
+        const testDeleteUser = await User.updateMany(
+          { neighborhoods: id },
+          { $pull: { neighborhoods: id } }
+        );
+        try {
+          const testDeleteService = await Service.updateMany(
+            { neighborhoods: id },
+            { $pull: { neighborhoods: id } }
+          );
+
+          try {
+            const testDeleteEvent = await Event.updateMany(
+              { neighborhoods: id },
+              { $pull: { neighborhoods: id } }
+            );
+            try {
+              const testDeleteStatement = await Statement.updateMany(
+                { neighborhoods: id },
+                { $pull: { neighborhoods: id } }
+              );
+            } catch (error) {
+              return res
+                .status(404)
+                .json("Statement in neighborhood not deleted");
+            }
+          } catch (error) {
+            return res.status(404).json("event in neighborhood not deleted");
+          }
+          return res.status(202).json("neighborhood in service deleted ok");
+        } catch (error) {
+          ("user in neighborhood not deleted");
+        }
+        return res.status(202).json("neighborhood in user deleted ok");
+      } catch (error) {
+        return res.status(404).json("user in neighborhood not deleted");
+      }
       deleteImgCloudinary(image);
       return res.status(200).json("ok delete");
     }
@@ -326,9 +362,10 @@ const toggleEvents = async (req, res, next) => {
     const { events } = req.body;
 
     const neighborhoodById = await Neighborhood.findById(id);
-    console.log(id);
+
     if (neighborhoodById) {
       const arrayIdevents = events.split(",");
+      console.log("🚀 ~ toggleEvents ~ arrayIdevents:", arrayIdevents);
 
       await Promise.all(
         arrayIdevents.map(async (event) => {
