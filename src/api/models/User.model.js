@@ -71,10 +71,7 @@ const UserSchema = new mongoose.Schema(
     points: {
       type: Number,
     },
-    totalStars: {
-      type: Number,
-    },
-    totalReviews: {
+    starsReviews: {
       type: Number,
     },
     stars: {
