@@ -25,7 +25,6 @@ const ServiceSchema = new mongoose.Schema(
     ],
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
