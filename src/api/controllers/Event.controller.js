@@ -2,6 +2,7 @@
 
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const Event = require("../models/Event.model.js");
+const Message = require("../models/Message.model.js");
 const Neighborhood = require("../models/Neighborhood.model.js");
 const User = require("../models/User.model");
 
@@ -39,40 +40,46 @@ const createEvent = async (req, res, next) => {
   }
 };
 
-//!-------------------DELETE---------------------------------------
+//!-----------------------DELETE---------------------------------------
 
 const deleteEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const event = await Event.findByIdAndDelete(id);
-    if (event) {
-      // lo buscamos para ver si sigue existiendo o no
-      const finByIdevent = await Event.findById(id);
+    const eventDelete = await Event.findById(id);
+    const eventDeleteImgs = eventDelete.images;
+
+    await Event.findByIdAndDelete(id);
+
+    if (await Event.findById(id)) {
+      return res.status(404).json("not deleted");
+    } else {
+      eventDeleteImgs.forEach((image) => {
+        deleteImgCloudinary(image);
+      });
 
       try {
-        const test = await Event.updateMany(
-          { event: id },
-          { $pull: { event: id } }
-        );
-        console.log(test);
-
+        await User.updateMany({ eventsFav: id }, { $pull: { eventsFav: id } });
         try {
-          await User.updateMany({ eventFav: id }, { $pull: { eventFav: id } });
-
-          return res.status(finByIdevent ? 404 : 200).json({
-            deleteTest: finByIdevent ? false : true,
-          });
+          await User.updateMany(
+            { sponsoredEvents: id },
+            { $pull: { sponsoredEvents: id } }
+          );
+          try {
+            await Neighborhood.updateMany(
+              { events: id },
+              { $pull: { events: id } }
+            );
+            return res.status(200).json("ok deleted");
+          } catch (error) {
+            return res
+              .status(404)
+              .json("service not deleted from neighborhood");
+          }
         } catch (error) {
-          return res.status(404).json({
-            error: "error catch update User",
-            message: error.message,
-          });
+          return res.status(404).json("serviceDemanded not deleted");
         }
       } catch (error) {
-        return res.status(404).json({
-          error: "error catch update event",
-          message: error.message,
-        });
+        return res.status(404).json("user not deleted");
       }
     }
   } catch (error) {
@@ -99,8 +106,405 @@ const getAllEvent = async (req, res, next) => {
   }
 };
 
+//!------------------getByIdEvent-----------------------
+
+const getByIdEvent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      return res.status(200).json(eventById);
+    } else {
+      return res.status(404).json("no se ha encontrado el evento");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
+//!--------------------UPDATE EVENT----------------------------
+
+const updateEvent = async (req, res, next) => {
+  let catchImg = req.files?.image && req.files?.image[0].path;
+
+  const { id } = req.params;
+
+  try {
+    await Event.syncIndexes();
+
+    const patchEvent = new Event(req.body);
+
+    req.files?.image && (patchEvent.images = catchImg);
+
+    try {
+      const eventToUpdate = await Event.findById(id);
+
+      req.files?.image &&
+        eventToUpdate.images.forEach((image) => deleteImgCloudinary(image));
+      patchEvent._id = eventToUpdate._id;
+      await Event.findByIdAndUpdate(id, patchEvent);
+
+      const updateKeys = Object.keys(req.body);
+      const updateEvent = await Event.findById(id);
+      const testUpdate = [];
+
+      updateKeys.forEach((item) => {
+        if (updateEvent[item] === req.body[item]) {
+          testUpdate.push({
+            [item]: true,
+          });
+        } else {
+          testUpdate.push({
+            [item]: false,
+          });
+        }
+      });
+
+      if (req.files.image) {
+        updateEvent.images === catchImg
+          ? testUpdate.push({
+              image: true,
+            })
+          : testUpdate.push({
+              image: false,
+            });
+      }
+
+      return res.status(200).json({
+        updateEvent,
+        testUpdate,
+      });
+    } catch (error) {
+      req.files?.image &&
+        catchImg.forEach((image) => deleteImgCloudinary(image));
+      return res.status(404).json(error.message);
+    }
+  } catch (error) {
+    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    return next(error);
+  }
+};
+
+//!-----------------------toggleNeighborhood en Event-------------------
+
+const toggleNeighborhood = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { neighborhoods } = req.body;
+
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdneighborhood = neighborhoods.split(",");
+
+      await Promise.all(
+        arrayIdneighborhood.map(async (neighborhood) => {
+          if (eventById.neighborhoods.includes(neighborhood)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { neighborhoods: neighborhood },
+              });
+
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $pull: { events: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhoods",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { neighborhoods: neighborhood },
+              });
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $push: { events: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update neighborhoods",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("neighborhoods"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+//!-----------------------toggleComment en Event-------------------
+
+const toggleComment = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { comments } = req.body;
+
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdcomment = comments.split(",");
+
+      await Promise.all(
+        arrayIdcomment.map(async (comment) => {
+          if (eventById.comments.includes(comment)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { comments: comments },
+              });
+
+              try {
+                await Message.findByIdAndUpdate(comment, {
+                  $pull: { recipientEvent: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update comments",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { comments: comment },
+              });
+              try {
+                await Message.findByIdAndUpdate(comment, {
+                  $push: { recipientEvent: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events push",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update comments",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("comments"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+//!-----------------------toggleSponsor en Event-------------------
+
+const toggleSponsor = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { sponsors } = req.body;
+
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdsponsor = sponsors.split(",");
+
+      await Promise.all(
+        arrayIdsponsor.map(async (sponsor) => {
+          if (eventById.sponsors.includes(sponsor)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { sponsors: sponsor },
+              });
+
+              try {
+                await User.findByIdAndUpdate(sponsor, {
+                  $pull: { sponsoredEvents: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update sponsors",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { sponsors: sponsor },
+              });
+              try {
+                await User.findByIdAndUpdate(sponsor, {
+                  $push: { sponsoredEvents: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events push",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update sponsors",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("sponsors"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+//!-----------------------toggleLike en EVENTS-------------------
+
+const toggleLike = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const likes = req.body.eventsFav;
+    console.log(req.body);
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdlike = likes.split(",");
+
+      await Promise.all(
+        arrayIdlike.map(async (like) => {
+          if (eventById.likes.includes(like)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { likes: like },
+              });
+
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $pull: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { likes: like },
+              });
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $push: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("likes"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createEvent,
   deleteEvent,
   getAllEvent,
+  getByIdEvent,
+  toggleNeighborhood,
+  toggleComment,
+  updateEvent,
+  toggleSponsor,
+  toggleLike,
 };

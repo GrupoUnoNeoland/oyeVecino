@@ -40,8 +40,7 @@ const EventSchema = new mongoose.Schema(
     },
 
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
-    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
