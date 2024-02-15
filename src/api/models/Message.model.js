@@ -10,7 +10,7 @@ const MessageSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["public", "private"],
+      enum: ["event", "statement", "service", "private"],
       required: true,
       trim: true,
     },
