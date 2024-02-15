@@ -6,7 +6,7 @@ const Message = require("../models/Message.model");
 
 //-------------- CREATE
 const createServices = async (req, res, next) => {
-  let catchImgs = req?.files.map((file) => file.path);
+  let catchImgs = req?.files?.map((file) => file.path);
 
   try {
     await Service.syncIndexes();
