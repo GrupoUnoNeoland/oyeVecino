@@ -1,20 +1,25 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 
 const User = require("../models/User.model");
+const Neighborhood = require("../models/Neighborhood.model");
+const Message = require("../models/Message.model");
+const Service = require("../models/Service.model");
+const Statement = require("../models/Statement.model");
+const Event = require("../models/Event.model");
 
 const randomCode = require("../../utils/randomCode");
-
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
 const { generateToken } = require("../../utils/token");
 const randomPassword = require("../../utils/randomPassword");
 const enumOk = require("../../utils/enumOk");
 
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+
 dotenv.config();
 
 const register = async (req, res, next) => {
-  console.log(req.files.image[0].path)
+
   let catchImg = req.files?.image[0].path
   let catchDocument = req.files?.document[0].path
 
@@ -31,10 +36,16 @@ const register = async (req, res, next) => {
     if (!userExist) {
       const newUser = new User({ ...req.body, confirmationCode });
 
-      if (req.file) {
-        newUser.image = req.file.path;
+      if (req.files.image) {
+        newUser.image = catchImg
       } else {
         newUser.image = "https://pic.onlinewebfonts.com/svg/img_181369.png";
+      }
+
+      if (req.files.document) {
+        newUser.document = catchDocument
+      } else {
+        return res.status(404).json("error, document not found")
       }
 
       try {
@@ -78,11 +89,17 @@ const register = async (req, res, next) => {
         return res.status(404).json(error.message);
       }
     } else {
-      if (req.file) deleteImgCloudinary(catchImg);
+      if (req.files) {
+        deleteImgCloudinary(catchImg)
+        deleteImgCloudinary(catchDocument)
+      }
       return res.status(409).json("this user already exist");
     }
   } catch (error) {
-    if (req.file) deleteImgCloudinary(catchImg);
+    if (req.files) {
+      deleteImgCloudinary(catchImg)
+      deleteImgCloudinary(catchDocument)
+    }
     return next(error);
   }
 };
@@ -268,7 +285,7 @@ const autoLogin = async (req, res, next) => {
   }
 };
 
-const changePassword = async (req, res, next) => {
+const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     console.log(req.body);
@@ -380,30 +397,24 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.file?.path;
+  let catchImg = req.files?.image && req.files?.image[0].path
+  let catchDocument = req.files?.document && req.files?.document[0].path
 
   try {
     await User.syncIndexes();
 
     const patchUser = new User(req.body);
 
-    req.file && (patchUser.image = catchImg);
-    //todo------ verificar como editar document
+    req.files.image && (patchUser.image = catchImg);
+    req.files.document && (patchUser.document = catchDocument);
+
     patchUser._id = req.user._id;
     patchUser.password = req.user.password;
     patchUser.rol = req.user.rol;
     patchUser.confirmationCode = req.user.confirmationCode;
     patchUser.email = req.user.email;
-    patchUser.check = req.user.check;
-    patchUser.name = req.user.name;
+    patchUser.confirmationCodeChecked = req.user.confirmationCodeChecked;
     patchUser.cif = req.user.cif;
-    patchUser.city = req.user.city;
-    patchUser.adress = req.user.adress;
-    patchUser.age = req.user.age;
-    patchUser.openingTime = req.user.openingTime;
-    patchUser.closingTime = req.user.closingTime;
-    patchUser.description = req.user.description;
-    patchUser.telephone = req.user.telephone;
 
     if (req.body?.gender) {
       const resultEnum = enumOk(req.body?.gender);
@@ -413,7 +424,8 @@ const update = async (req, res, next) => {
     try {
       await User.findByIdAndUpdate(req.user._id, patchUser);
 
-      if (req.file) deleteImgCloudinary(req.user.image);
+      req.files?.image && deleteImgCloudinary(req.user.image)
+      req.files?.document && deleteImgCloudinary(req.user.document)
 
       const updateUser = await User.findById(req.user._id);
 
@@ -439,7 +451,7 @@ const update = async (req, res, next) => {
         }
       });
 
-      if (req.file) {
+      if (req.files.image) {
         updateUser.image === catchImg
           ? testUpdate.push({
             image: true,
@@ -449,35 +461,542 @@ const update = async (req, res, next) => {
           });
       }
 
+      if (req.files.document) {
+        updateUser.document === catchDocument
+          ? testUpdate.push({
+            document: true,
+          })
+          : testUpdate.push({
+            document: false,
+          });
+      }
+
       return res.status(200).json({
         updateUser,
         testUpdate,
       });
     } catch (error) {
-      if (req.file) deleteImgCloudinary(catchImg);
+      req.files?.image && deleteImgCloudinary(catchImg)
+      req.files?.document && deleteImgCloudinary(catchDocument)
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    if (req.file) deleteImgCloudinary(catchImg);
+    req.files?.image && deleteImgCloudinary(catchImg)
+    req.files?.document && deleteImgCloudinary(catchDocument)
     return next(error);
   }
 };
 
 const deleteUser = async (req, res, next) => {
   try {
-    const { _id, image } = req.user;
+    const { _id, image, document } = req.user;
     await User.findByIdAndDelete(_id);
 
     if (await User.findById(_id)) {
       return res.status(404).json("not deleted"); ///
     } else {
       deleteImgCloudinary(image);
+      deleteImgCloudinary(document);
       return res.status(200).json("ok delete");
     }
   } catch (error) {
     return next(error);
   }
 };
+
+const getAll = async (req, res, next) => {
+  try {
+    const allUser = await User.find()
+
+    if (allUser.length > 0) {
+      return res.status(200).json(allUser);
+    } else {
+      return res.status(404).json("users no found");
+    }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error to get users",
+      message: error.message,
+    });
+  }
+};
+
+const getById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const usersById = await User.findById(id);
+    if (usersById) {
+      return res.status(200).json(usersById);
+    } else {
+      return res.status(404).json("user not found");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
+const toggleNeighborhood = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { neighborhoods } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdNeighborhoods = neighborhoods.split(",");
+
+      Promise.all(
+        arrayIdNeighborhoods.map(async (neighborhood, index) => {
+          if (userById.neighborhoods.includes(neighborhood)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { neighborhoods: neighborhood },
+              });
+
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $pull: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update neighborhood",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { neighborhoods: neighborhood },
+              });
+              try {
+                await Neighborhood.findByIdAndUpdate(neighborhood, {
+                  $push: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update neighborhood",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("neighborhoods"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleOfferedService = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { services } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdServices = services.split(",");
+
+      Promise.all(
+        arrayIdServices.map(async (service, index) => {
+          if (userById.servicesOffered.includes(service)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { servicesOffered: service },
+              });
+
+              try {
+                await Service.findByIdAndUpdate(service, {
+                  $pull: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update offered service",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { servicesOffered: service },
+              });
+              try {
+                await Service.findByIdAndUpdate(service, {
+                  $push: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update offered service",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("servicesOffered"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleDemandedService = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { services } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdServices = services.split(",");
+
+      Promise.all(
+        arrayIdServices.map(async (service, index) => {
+          if (userById.servicesDemanded.includes(service)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { servicesDemanded: service },
+              });
+
+              try {
+                await Service.findByIdAndUpdate(service, {
+                  $pull: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update demanded service",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { servicesDemanded: service },
+              });
+              try {
+                await Service.findByIdAndUpdate(service, {
+                  $push: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update demanded service",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("servicesDemanded"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const togglePostedStatements = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { statements } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdStatements = statements.split(",");
+
+      Promise.all(
+        arrayIdStatements.map(async (statement, index) => {
+          if (userById.statements.includes(statement)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { statements: statement },
+              });
+
+              try {
+                await Statement.findByIdAndUpdate(statement, {
+                  $pull: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statement",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { statements: statement },
+              });
+              try {
+                await Statement.findByIdAndUpdate(statement, {
+                  $push: { users: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statement",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("statements"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleFavEvents = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { eventsFav } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdEventsFav = eventsFav.split(",");
+
+      Promise.all(
+        arrayIdEventsFav.map(async (eventFav, index) => {
+          if (userById.eventsFav.includes(eventFav)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { eventsFav: eventFav },
+              });
+
+              try {
+                await Event.findByIdAndUpdate(eventFav, {
+                  $pull: { likes: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update eventsFav",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { eventsFav: eventFav },
+              });
+              try {
+                await Event.findByIdAndUpdate(eventFav, {
+                  $push: { likes: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update eventsFav",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("eventsFav"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleFavStatements = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { statementsFav } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      const arrayIdStatementsFav = statementsFav.split(",");
+
+      Promise.all(
+        arrayIdStatementsFav.map(async (statementFav, index) => {
+          if (userById.statementsFav.includes(statementFav)) {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $pull: { statementsFav: statementFav },
+              });
+
+              try {
+                await Statement.findByIdAndUpdate(statementFav, {
+                  $pull: { likes: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statementsFav",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await User.findByIdAndUpdate(id, {
+                $push: { statementsFav: statementFav },
+              });
+              try {
+                await Statement.findByIdAndUpdate(statementFav, {
+                  $push: { likes: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statementsFav",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update user",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json(error.message))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await User.findById(id).populate("statementsFav"),
+          });
+        });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 
 module.exports = {
   register,
@@ -486,9 +1005,17 @@ module.exports = {
   checkCodeNewUser,
   login,
   autoLogin,
-  changePassword,
+  forgotPassword,
   sendPassword,
   modifyPassword,
   update,
   deleteUser,
+  getAll,
+  getById,
+  toggleNeighborhood,
+  toggleOfferedService,
+  toggleDemandedService,
+  togglePostedStatements,
+  toggleFavEvents,
+  toggleFavStatements
 };
