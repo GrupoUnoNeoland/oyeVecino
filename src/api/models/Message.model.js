@@ -26,12 +26,11 @@ const MessageSchema = new mongoose.Schema(
     stars: {
       type: Number,
     },
-    recipientEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientServices: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    recipientStatements: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    ],
+    recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientStatement: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
     services: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
   },
   {
