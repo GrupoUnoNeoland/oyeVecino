@@ -73,6 +73,7 @@ const UserSchema = new mongoose.Schema(
     },
     stars: {
       type: Number,
+      default: 0
     },
     rol: {
       type: String,
