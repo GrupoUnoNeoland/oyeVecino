@@ -70,6 +70,13 @@ const deleteServices = async (req, res, next) => {
               { $pull: { services: id } }
             );
             return res.status(200).json("ok deleted");
+            try {
+              await Neighborhood.updateMany(
+                { services: id },
+                { $pull: { services: id } }
+              );
+              return res.status(200).json("ok deleted");
+            } catch (error) {}
           } catch (error) {
             return res
               .status(404)

@@ -35,6 +35,9 @@ app.use("/api/v1/services/", ServiceRoutes);
 const MessageRoutes = require("./src/api/routes/Message.routes");
 app.use("/api/v1/messages/", MessageRoutes);
 
+const CityRoutes = require("./src/api/routes/City.routes");
+app.use("/api/v1/cities/", CityRoutes);
+
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
   error.status = 404;
