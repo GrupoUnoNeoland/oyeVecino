@@ -71,14 +71,9 @@ const UserSchema = new mongoose.Schema(
     points: {
       type: Number,
     },
-    totalStars: {
-      type: Number,
-    },
-    totalReviews: {
-      type: Number,
-    },
     stars: {
       type: Number,
+      default: 0
     },
     rol: {
       type: String,
@@ -106,6 +101,7 @@ const UserSchema = new mongoose.Schema(
     eventsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     statementsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
     sponsoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    starsReviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }]
   },
   {
     timestamps: true,
