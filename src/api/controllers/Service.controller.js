@@ -3,6 +3,7 @@ const Service = require("../models/Service.model");
 const User = require("../models/User.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Message = require("../models/Message.model");
+const Rating = require("../models/Rating.model");
 
 //-------------- CREATE
 const createServices = async (req, res, next) => {
@@ -499,6 +500,37 @@ const getByNameServices = async (req, res, next) => {
   }
 };
 
+const calculateStarsAverage = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const allUserReviews = await Rating.find({ userServiceProvider: id });
+    const allStars = allUserReviews.map((review) => review.stars);
+    const totalStars = allStars.reduce((acc, currentStar) => {
+      acc += currentStar;
+      return acc;
+    }, 0);
+
+    const starsAverage = Math.round(totalStars / allStars.length);
+
+    try {
+      await User.findByIdAndUpdate(id, {
+        stars: starsAverage,
+      });
+      const userRated = await User.findById(id);
+      return res
+        .status(200)
+        .json({ message: "User rating media updated", user: userRated });
+    } catch (error) {
+      return res.status(404).json("User rating media not updated");
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ error: error.message, message: "Average stars not caculated" });
+  }
+};
+
 module.exports = {
   createServices,
   deleteServices,
@@ -510,4 +542,5 @@ module.exports = {
   getAllServices,
   getByNameServices,
   updateServices,
+  calculateStarsAverage,
 };
