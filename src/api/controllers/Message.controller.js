@@ -3,22 +3,24 @@ const Chat = require("../models/Chat.model");
 const Event = require("../models/Event.model");
 const Message = require("../models/Message.model");
 const Service = require("../models/Service.model");
+const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 const createMessage = async (req, res, next) => {
   try {
-    const { owner, type, content, images } = req.body;
+    const { type, images } = req.body;
     const { id } = req.params;
+    let catchImages = req.files?.map((image) => image.path);
 
     const findUser = await User.findById(id);
     if (type == "private") {
-      //todo -----------------------> meter el id del nuevo comentario en postedMessage en el modelo de user
       if (findUser) {
         const newMessage = new Message(req.body);
 
         newMessage.recipientUser = id;
+        newMessage.images = catchImages;
         const savedMessage = await newMessage.save();
 
         try {
@@ -26,12 +28,11 @@ const createMessage = async (req, res, next) => {
             userOne: req.user._id,
             userTwo: findUser._id,
           });
+
           const chatExistTwo = await Chat.findOne({
             userOne: findUser._id,
             userTwo: req.user._id,
           });
-          console.log(chatExistOne);
-          console.log(chatExistTwo);
 
           if (chatExistOne != null || chatExistTwo != null) {
             if (chatExistOne) {
@@ -71,10 +72,20 @@ const createMessage = async (req, res, next) => {
               } catch (error) {
                 try {
                   await Message.findByIdAndDelete(savedMessage._id);
+                  if (req.files) {
+                    req.files.forEach((image) =>
+                      deleteImgCloudinary(image.path)
+                    );
+                  }
                   return res
                     .status(404)
                     .json("error to update the chat, comment deleted");
                 } catch (error) {
+                  if (req.files) {
+                    req.files.forEach((image) =>
+                      deleteImgCloudinary(image.path)
+                    );
+                  }
                   return res.status(404).json({
                     idCommentNoDeleted: newMessage._id,
                     error: "nor comment and chat not deleted",
@@ -118,10 +129,20 @@ const createMessage = async (req, res, next) => {
               } catch (error) {
                 try {
                   await Message.findByIdAndDelete(savedMessage._id);
+                  if (req.files) {
+                    req.files.forEach((image) =>
+                      deleteImgCloudinary(image.path)
+                    );
+                  }
                   return res
                     .status(404)
                     .json("error to update the chat, comment deleted");
                 } catch (error) {
+                  if (req.files) {
+                    req.files.forEach((image) =>
+                      deleteImgCloudinary(image.path)
+                    );
+                  }
                   return res
                     .status(404)
                     .json("nor comment and chat not deleted");
@@ -175,6 +196,9 @@ const createMessage = async (req, res, next) => {
                 await Message.findByIdAndDelete(savedMessage._id);
                 return res.status(404).json(error.message);
               } catch (error) {
+                if (req.files) {
+                  req.files.forEach((image) => deleteImgCloudinary(image.path));
+                }
                 return res
                   .status(404)
                   .json("chat not created & message not deleted");
@@ -182,14 +206,21 @@ const createMessage = async (req, res, next) => {
             }
           }
         } catch (error) {
+          if (req.files) {
+            req.files.forEach((image) => deleteImgCloudinary(image.path));
+          }
           return res.status(404).json(error.message);
         }
       } else {
+        if (req.files) {
+          req.files.forEach((image) => deleteImgCloudinary(image.path));
+        }
         return res.status(404).json("wrong id");
       }
     } else if (type == "event") {
       const newMessage = new Message(req.body);
       newMessage.recipientEvent = id;
+      newMessage.images = catchImages;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -221,41 +252,150 @@ const createMessage = async (req, res, next) => {
           });
         }
       } catch (error) {
+        if (req.files) {
+          req.files.forEach((image) => deleteImgCloudinary(image.path));
+        }
         return res.status(404).json({
           error: "message was not created",
           idMessage: newMessage._id,
         });
       }
+    } else if (type == "statement") {
+      const newMessage = new Message(req.body);
+      newMessage.recipientStatement = id;
+      newMessage.images = catchImages;
+      try {
+        const savedMessage = await newMessage.save();
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: {
+              statementsComments: savedMessage._id,
+            },
+          });
+          try {
+            await Statement.findByIdAndUpdate(id, {
+              $push: {
+                comments: savedMessage._id,
+              },
+            });
+            return res.status(200).json({
+              event: await Event.findById(id),
+              comment: savedMessage,
+            });
+          } catch (error) {
+            return res.status(404).json({
+              error: "Comments key was not updated",
+              idMessage: newMessage._id,
+            });
+          }
+        } catch (error) {
+          return res.status(404).json({
+            error: "statementsComments key was not updated",
+            idMessage: newMessage._id,
+          });
+        }
+      } catch (error) {
+        if (req.files) {
+          req.files.forEach((image) => deleteImgCloudinary(image.path));
+        }
+        return res.status(404).json({
+          error: "message was not created",
+          idMessage: newMessage._id,
+        });
+      }
+    } else if (type == "service") {
+      const newMessage = new Message(req.body);
+      newMessage.recipientService = id;
+      newMessage.images = catchImages;
+      try {
+        const savedMessage = await newMessage.save();
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: {
+              servicesComments: savedMessage._id,
+            },
+          });
+          try {
+            await Service.findByIdAndUpdate(id, {
+              $push: {
+                comments: savedMessage._id,
+              },
+            });
+            return res.status(200).json({
+              event: await Event.findById(id),
+              comment: savedMessage,
+            });
+          } catch (error) {
+            return res.status(404).json({
+              error: "Comments key was not updated",
+              idMessage: newMessage._id,
+            });
+          }
+        } catch (error) {
+          return res.status(404).json({
+            error: "servicesComments key was not updated",
+            idMessage: newMessage._id,
+          });
+        }
+      } catch (error) {
+        if (req.files) {
+          req.files.forEach((image) => deleteImgCloudinary(image.path));
+        }
+        return res.status(404).json({
+          error: "message was not created",
+          idMessage: newMessage._id,
+        });
+      }
+    } else {
+      if (req.files) {
+        req.files.forEach((image) => deleteImgCloudinary(image.path));
+      }
+      return res.status(404).json("can't create any type of message/comment");
     }
   } catch (error) {
+    if (req.files) {
+      console.log("🚀 ~ createMessage ~ req.files:", req.files);
+
+      req.files.forEach((image) => deleteImgCloudinary(image.path));
+    }
     return res.status(404).json(error.message);
   }
 };
-//-------------------------------------
-// todo cambio files
-const updateMessage = async (req, res, next) => {
-  await Message.syncIndexes();
+//---------------------------------------------------------------------
 
+const updateMessage = async (req, res, next) => {
   try {
+    await Message.syncIndexes();
     const { id } = req.params;
     const MessageById = await Message.findById(id);
+    let catchImgs = req?.files?.map((file) => file.path);
 
     if (MessageById) {
-      if (req.body.images) {
+      if (req.files) {
         MessageById.images.forEach((image) => deleteImgCloudinary(image));
-        //const newImages = req.body.images
-        console.log(req.files);
-      }
-      const customBody = {
-        _id: MessageById.id,
-        content: req.body?.content ? req.body?.content : MessageById.content,
-      };
 
-      try {
-        await Message.findByIdAndUpdate(id, customBody);
-        return res.status(200).json("Message update ok");
-      } catch (error) {
-        return res.status(404).json("cannot update Message");
+        const customBody = {
+          content: req.body?.content ? req.body?.content : MessageById.content,
+          images: catchImgs
+            ? (MessageById.images = catchImgs)
+            : MessageById.images,
+        };
+        try {
+          await Message.findByIdAndUpdate(id, customBody);
+          return res.status(200).json("Message update ok");
+        } catch (error) {
+          return res.status(404).json("cannot update Message");
+        }
+      } else {
+        const customBody = {
+          content: req.body?.content ? req.body?.content : MessageById.content,
+        };
+        try {
+          await Message.findByIdAndUpdate(id, customBody);
+          return res.status(200).json("Message update ok");
+        } catch (error) {
+          return res.status(404).json("cannot update Message");
+        }
       }
     } else {
       return res.status(404).json("Message not exist");
@@ -265,78 +405,144 @@ const updateMessage = async (req, res, next) => {
   }
 };
 
-//-------------------------------delete message:
-// todo borrar otros
+//-------------------------------delete message:------------------------
 
 const deleteMessege = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const MessageDelete = await Message.findById(id);
+    const messageDelete = await Message.findById(id);
+    const { type, owner, recipientUser } = messageDelete;
 
-    const image = MessageDelete.images;
+    const images = messageDelete.images;
     await Message.findByIdAndDelete(id);
+    images.forEach((image) => {
+      deleteImgCloudinary(image);
+    });
+
     if (await Message.findById(id)) {
       return res.status(404).json("message not deleted");
-    } else {
+    } else if (type == "service") {
       try {
-        const testDeleteMessageUserServicesComments = await User.updateMany(
+        await User.updateMany(
           { servicesComments: id },
           { $pull: { servicesComments: id } }
         );
         try {
-          const testDeleteMessageUserEventsComments = await User.updateMany(
-            { eventsComments: id },
-            { $pull: { eventsComments: id } }
+          await Service.updateMany(
+            { comments: id },
+            { $pull: { comments: id } }
           );
-
-          try {
-            const testDeleteUserMessageStatementsComments =
-              await User.updateMany(
-                { statementsComments: id },
-                { $pull: { statementsComments: id } }
-              );
-            try {
-              const testDeleteUserReceivedMessages = await User.updateMany(
-                { receivedMessages: id },
-                { $pull: { receivedMessages: id } }
-              );
-              try {
-                const testDeleteUserPostedMessages = await User.updateMany(
-                  { postedMessages: id },
-                  { $pull: { postedMessages: id } }
-                );
-                deleteImgCloudinary(image);
-                return res.status(200).json("message deleted ok");
-              } catch (error) {
-                return res
-                  .status(404)
-                  .json("UserpostedMessages in messages not deleted");
-              }
-            } catch (error) {
-              return res
-                .status(404)
-                .json("UserReceivedMessages in messages not deleted");
-            }
-          } catch (error) {
-            return res
-              .status(404)
-              .json("UserMessageStatementsComments in messages not deleted");
-          }
+          return res.status(200).json("comments key updated");
         } catch (error) {
-          ("UserEventsComments in messages not deleted");
+          return res
+            .status(404)
+            .json("comments key was not updated in service");
+        }
+      } catch (error) {
+        return res.status(404).json("serviceComents was not updated un user");
+      }
+    } else if (type == "event") {
+      try {
+        await User.updateMany(
+          { eventsComments: id },
+          { $pull: { eventsComments: id } }
+        );
+        try {
+          await Event.updateMany({ comments: id }, { $pull: { comments: id } });
+          return res.status(200).json("EventsComments key updated");
+        } catch (error) {
+          return res.status(404).json("comments in event was not updated");
+        }
+      } catch (error) {
+        return res.status(404).json("eventsComments in user was not updated");
+      }
+    } else if (type == "statement") {
+      try {
+        await User.updateMany(
+          { statementsComments: id },
+          { $pull: { statementsComments: id } }
+        );
+        try {
+          await Statement.updateMany(
+            { comments: id },
+            { $pull: { comments: id } }
+          );
+          return res.status(200).json("comments key updated");
+        } catch (error) {
+          return res.status(404).json("comments in statement was not updated");
         }
       } catch (error) {
         return res
           .status(404)
-          .json("UserServicesComments in messages not deleted");
+          .json("statementsComments was not updated in user");
       }
+    } else if (type == "private") {
+      try {
+        await User.findByIdAndUpdate(owner, { $pull: { postedMessages: id } });
+
+        try {
+          await User.findByIdAndUpdate(recipientUser, {
+            $pull: { receivedMessages: id },
+          });
+
+          try {
+            const chatExistOne = await Chat.findOne(
+              { userOne: [req.user._id] },
+              { userTwo: [recipientUser] }
+            );
+
+            const chatExistTwo = await Chat.findOne(
+              { userOne: [recipientUser] },
+              { userTwo: [req.user._id] }
+            );
+
+            if (chatExistOne) {
+              try {
+                await chatExistOne.updateOne({
+                  $pull: { messages: id },
+                });
+                return res.status(200).json("message deleted in chat");
+              } catch (error) {
+                return res
+                  .status(404)
+                  .json("Message was not deleted from chat");
+              }
+            } else if (chatExistTwo) {
+              try {
+                await chatExistTwo.updateOne({
+                  $pull: { messages: id },
+                });
+                return res.status(200).json("message deleted in chat");
+              } catch (error) {
+                return res
+                  .status(404)
+                  .json("Message was not deleted from chat");
+              }
+            } else {
+              return res.status(404).json("chat do not exist");
+            }
+          } catch (error) {
+            return res.status(404).json("message not deleted in chat");
+          }
+        } catch (error) {
+          return res
+            .status(404)
+            .json("Received message was not updated in recipientUser");
+        }
+      } catch (error) {
+        return res
+          .status(404)
+          .json("Posted message was not updated in ownerUser");
+      }
+    } else {
+      return res.status(404).json("Message not found");
     }
   } catch (error) {
     return next(error);
   }
 };
 
-//-----------------------------get all messages:
+//-----------------------------get all messages:------------------------
 
 const getAllMessages = async (req, res, next) => {
   try {
@@ -354,14 +560,6 @@ const getAllMessages = async (req, res, next) => {
     });
   }
 };
-
-const createMessageStatement = () => {};
-const createMessageService = () => {};
-const createMessageEvent = () => {};
-
-//-----------------------------------
-//?--------toggles-------------------
-//-----------------------------------
 
 module.exports = {
   createMessage,

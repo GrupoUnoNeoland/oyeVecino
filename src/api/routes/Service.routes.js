@@ -10,6 +10,7 @@ const {
   getAllServices,
   getByNameServices,
   updateServices,
+  calculateStarsAverage,
 } = require("../controllers/Service.controller");
 const express = require("express");
 
@@ -31,5 +32,6 @@ ServiceRoutes.patch(
   upload.array("image", 5),
   updateServices
 );
+ServiceRoutes.post("/add/rating/:id", calculateStarsAverage);
 
 module.exports = ServiceRoutes;
