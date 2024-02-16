@@ -24,10 +24,13 @@ const MessageSchema = new mongoose.Schema(
       },
     ],
 
-    recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
+    recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "Service" },
     recipientUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    recipientStatement: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientStatement: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Statement",
+    },
   },
   {
     timestamps: true,
