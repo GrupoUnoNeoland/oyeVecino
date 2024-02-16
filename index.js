@@ -34,6 +34,8 @@ const ServiceRoutes = require("./src/api/routes/Service.routes");
 app.use("/api/v1/services/", ServiceRoutes);
 const MessageRoutes = require("./src/api/routes/Message.routes");
 app.use("/api/v1/messages/", MessageRoutes);
+const RatingRoutes = require("./src/api/routes/Rating.routes");
+app.use("/api/v1/rating/", RatingRoutes);
 
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
