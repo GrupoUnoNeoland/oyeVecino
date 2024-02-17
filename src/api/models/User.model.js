@@ -70,10 +70,6 @@ const UserSchema = new mongoose.Schema(
     points: {
       type: Number,
     },
-    stars: {
-      type: Number,
-      default: 0
-    },
     rol: {
       type: String,
       enum: ["vecino", "admin", "superAdmin"],
