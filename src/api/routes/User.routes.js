@@ -5,7 +5,7 @@ const express = require("express");
 const UserRoutes = express.Router();
 
 UserRoutes.post("/register", upload.single('image'), register)
-UserRoutes.post("/registeradmin", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'document', maxCount: 1 }]), [isAuthSuperAdmin], registerAdmin)
+UserRoutes.post("/registeradmin", upload.single('image'), [isAuthSuperAdmin], registerAdmin)
 
 UserRoutes.post("/register/sendMail/:id", sendCode)
 UserRoutes.post("/resend", resendCode);
@@ -18,7 +18,7 @@ UserRoutes.patch("/forgotpassword", forgotPassword);
 UserRoutes.patch("/sendPassword/:id", [isAuth], sendPassword);
 UserRoutes.patch("/changepassword", [isAuth], modifyPassword);
 
-UserRoutes.patch("/update/update", [isAuth], upload.fields([{ name: 'image', maxCount: 1 }, { name: 'document', maxCount: 1 }]), update);
+UserRoutes.patch("/update/update", [isAuth], upload.single('image'), update);
 UserRoutes.delete("/", [isAuth], deleteUser);
 UserRoutes.get("/", [isAuth], getAll);
 UserRoutes.get("/:id", [isAuth], getById);
