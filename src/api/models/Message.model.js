@@ -2,12 +2,7 @@ const mongoose = require("mongoose");
 
 const MessageSchema = new mongoose.Schema(
   {
-    owner: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     type: {
       type: String,
       enum: ["event", "statement", "service", "private"],
