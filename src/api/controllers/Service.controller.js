@@ -15,6 +15,8 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
+      newService.users[0] = req.user._id
+      newService.neighborhoods[0] = req.user.neighborhoods[0]
 
       try {
         const ServiceSave = await newService.save();
