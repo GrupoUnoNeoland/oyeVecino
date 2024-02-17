@@ -34,11 +34,7 @@ const EventSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
-    organizer: {
-      type: String,
-      required: false,
-    },
-
+    organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     neighborhoods: [

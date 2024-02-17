@@ -15,8 +15,8 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
-      newService.users[0] = req.user._id
-      newService.neighborhoods[0] = req.user.neighborhoods[0]
+      newService.users[0] = req.user._id;
+      newService.neighborhoods[0] = req.user.neighborhoods[0];
 
       try {
         const ServiceSave = await newService.save();
@@ -72,23 +72,35 @@ const deleteServices = async (req, res, next) => {
               { services: id },
               { $pull: { services: id } }
             );
-            return res.status(200).json("ok deleted");
+
+            try {
+              await Message.updateMany(
+                { recipientService: id },
+                { $pull: { recipientService: id } }
+              );
+              return res.status(200).json("service deleted ok");
+            } catch (error) {
+              return res
+                .status(404)
+                .json("recipientService not deleted from message");
+            }
           } catch (error) {
             return res
               .status(404)
               .json("service not deleted from neighborhood");
           }
         } catch (error) {
-          return res.status(404).json("serviceDemanded not deleted");
+          return res.status(404).json("serviceDemanded not deleted froms user");
         }
       } catch (error) {
-        return res.status(404).json("user not deleted");
+        return res.status(404).json("servicesOffered not deleted from user");
       }
     }
   } catch (error) {
     return res.status(404).json(error.message);
   }
 };
+
 //-------------- TOGGLE USERS OFFERED
 const toggleUsersServiceOffered = async (req, res, next) => {
   try {
@@ -431,11 +443,11 @@ const updateServices = async (req, res, next) => {
       if (req.files.image) {
         updateService.images === catchImg
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -463,7 +475,7 @@ const getByIdService = async (req, res, next) => {
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
-      return res.status(404).json("no se ha encontrado el service");
+      return res.status(404).json("service not found");
     }
   } catch (error) {
     return res.status(404).json(error.message);
@@ -538,8 +550,7 @@ const calculateStarsAverage = async (req, res, next) => {
     }, 0);
 
     const starsAverage = Math.round(totalStars / allStars.length);
-    return starsAverage
-
+    return starsAverage;
   } catch (error) {
     return res
       .status(404)

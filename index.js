@@ -27,15 +27,24 @@ app.use("/api/v1/events/", EventRoutes);
 
 const StatementRoutes = require("./src/api/routes/Statement.routes");
 app.use("/api/v1/statements/", StatementRoutes);
+
 const NeighborhoodRoutes = require("./src/api/routes/Neighborhood.routes");
 app.use("/api/v1/neighborhoods/", NeighborhoodRoutes);
 
 const ServiceRoutes = require("./src/api/routes/Service.routes");
 app.use("/api/v1/services/", ServiceRoutes);
+
 const MessageRoutes = require("./src/api/routes/Message.routes");
 app.use("/api/v1/messages/", MessageRoutes);
+
 const RatingRoutes = require("./src/api/routes/Rating.routes");
 app.use("/api/v1/rating/", RatingRoutes);
+
+const CityRoutes = require("./src/api/routes/City.routes");
+app.use("/api/v1/cities/", CityRoutes);
+
+const RequestRoutes = require("./src/api/routes/Request.routes");
+app.use("/api/v1/requests/", RequestRoutes);
 
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");

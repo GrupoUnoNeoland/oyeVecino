@@ -18,7 +18,6 @@ const MessageSchema = new mongoose.Schema(
         type: String,
       },
     ],
-
     recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
     recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "Service" },
     recipientUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

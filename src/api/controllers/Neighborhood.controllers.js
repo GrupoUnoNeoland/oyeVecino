@@ -1,5 +1,6 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const Event = require("../models/Event.model");
+const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
@@ -11,9 +12,9 @@ const createNeighborhood = async (req, res, next) => {
 
   try {
     await Neighborhood.syncIndexes();
-
+    const { city } = req.params;
     const newNeighborhood = new Neighborhood(req.body);
-
+    newNeighborhood.city = city;
     if (req.file) {
       newNeighborhood.image = catchImg;
     } else {
@@ -95,23 +96,21 @@ const deleteNeighborhood = async (req, res, next) => {
           { $pull: { neighborhoods: id } }
         );
         try {
-          await Service.updateMany(
-            { neighborhoods: id },
-            { $pull: { neighborhoods: id } }
-          );
+          await Service.deleteMany({ neighborhoods: [id] });
 
           try {
-            await Event.updateMany(
-              { neighborhoods: id },
-              { $pull: { neighborhoods: id } }
-            );
-            try {
-              await Statement.updateMany(
-                { neighborhoods: id },
-                { $pull: { neighborhoods: id } }
-              );
+            await Event.deleteMany({ neighborhoods: [id] });
 
-              return res.status(200).json("neighborhood in service deleted ok");
+            try {
+              await Statement.deleteMany({ neighborhoods: [id] });
+              try {
+                await Message.deleteMany({ neighborhoods: [id] });
+                return res.status(200).json("Message in service deleted ok");
+              } catch (error) {
+                return res
+                  .status(404)
+                  .json("Message in neighborhood not deleted");
+              }
             } catch (error) {
               return res
                 .status(404)

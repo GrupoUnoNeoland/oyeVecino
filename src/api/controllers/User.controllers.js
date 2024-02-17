@@ -6,6 +6,7 @@ const Message = require("../models/Message.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
 const Event = require("../models/Event.model");
+const Chat = require("../models/Chat.model");
 
 const randomCode = require("../../utils/randomCode");
 const { generateToken } = require("../../utils/token");
@@ -15,12 +16,12 @@ const enumOk = require("../../utils/enumOk");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
+const Rating = require("../models/Rating.model");
 
 dotenv.config();
 
 const register = async (req, res, next) => {
-
-  let catchImg = req.file.path
+  let catchImg = req.file.path;
 
   try {
     await User.syncIndexes();
@@ -36,7 +37,7 @@ const register = async (req, res, next) => {
       const newUser = new User({ ...req.body, confirmationCode });
 
       if (catchImg) {
-        newUser.image = catchImg
+        newUser.image = catchImg;
       } else {
         newUser.image = "https://pic.onlinewebfonts.com/svg/img_181369.png";
       }
@@ -83,22 +84,21 @@ const register = async (req, res, next) => {
       }
     } else {
       if (req.files) {
-        deleteImgCloudinary(catchImg)
+        deleteImgCloudinary(catchImg);
       }
       return res.status(409).json("this user already exist");
     }
   } catch (error) {
     if (req.files) {
-      deleteImgCloudinary(catchImg)
+      deleteImgCloudinary(catchImg);
     }
     return next(error);
   }
 };
 
 const registerAdmin = async (req, res, next) => {
-
-  let catchImg = req.files?.image[0].path
-  let catchDocument = req.files?.document[0].path
+  let catchImg = req.files?.image[0].path;
+  let catchDocument = req.files?.document[0].path;
 
   try {
     await User.syncIndexes();
@@ -475,7 +475,7 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.file.path
+  let catchImg = req.file.path;
 
   try {
     await User.syncIndexes();
@@ -530,13 +530,12 @@ const update = async (req, res, next) => {
       if (req.file.path) {
         updateUser.image === catchImg
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
-
 
       return res.status(200).json({
         updateUser,
@@ -553,8 +552,8 @@ const update = async (req, res, next) => {
 };
 
 const deleteUser = async (req, res, next) => {
-  const isUser = req.user.rol === "vecino"
-  const isAdmin = req.user.rol === "admin"
+  const isUser = req.user.rol === "vecino";
+  const isAdmin = req.user.rol === "admin";
   if (isUser) {
     try {
       const { _id, image } = req.user;
@@ -572,9 +571,9 @@ const deleteUser = async (req, res, next) => {
   } else if (isAdmin) {
     try {
       const { userId } = req.body;
-      const { image } = await User.findById(userId)
+      const { image } = await User.findById(userId);
       await User.findByIdAndDelete(userId);
-      const userToDelete = await User.findById(userId)
+      const userToDelete = await User.findById(userId);
 
       if (userToDelete) {
         return res.status(404).json("not deleted"); ///
@@ -586,7 +585,6 @@ const deleteUser = async (req, res, next) => {
       return next(error);
     }
   }
-
 };
 
 const getAll = async (req, res, next) => {
@@ -596,7 +594,9 @@ const getAll = async (req, res, next) => {
     );
 
     if (allUser.length > 0) {
-      return res.status(200).json(await User.find().populate("receivedMessages"));
+      return res
+        .status(200)
+        .json(await User.find().populate("receivedMessages"));
     } else {
       return res.status(404).json("users no found");
     }
@@ -1106,5 +1106,5 @@ module.exports = {
   togglePostedStatements,
   toggleFavEvents,
   toggleFavStatements,
-  registerAdmin
+  registerAdmin,
 };
