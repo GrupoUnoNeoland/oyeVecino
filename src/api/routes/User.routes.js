@@ -4,7 +4,7 @@ const { register, resendCode, sendCode, checkCodeNewUser, login, autoLogin, forg
 const express = require("express");
 const UserRoutes = express.Router();
 
-UserRoutes.post("/register", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'document', maxCount: 1 }]), register)
+UserRoutes.post("/register", upload.single('image'), register)
 UserRoutes.post("/registeradmin", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'document', maxCount: 1 }]), [isAuthSuperAdmin], registerAdmin)
 
 UserRoutes.post("/register/sendMail/:id", sendCode)
