@@ -429,11 +429,11 @@ const updateServices = async (req, res, next) => {
       if (req.files.image) {
         updateService.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -512,18 +512,8 @@ const calculateStarsAverage = async (req, res, next) => {
     }, 0);
 
     const starsAverage = Math.round(totalStars / allStars.length);
+    return starsAverage
 
-    try {
-      await User.findByIdAndUpdate(id, {
-        stars: starsAverage,
-      });
-      const userRated = await User.findById(id);
-      return res
-        .status(200)
-        .json({ message: "User rating media updated", user: userRated });
-    } catch (error) {
-      return res.status(404).json("User rating media not updated");
-    }
   } catch (error) {
     return res
       .status(404)
