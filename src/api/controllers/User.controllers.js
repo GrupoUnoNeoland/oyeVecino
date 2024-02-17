@@ -19,8 +19,8 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const register = async (req, res, next) => {
-  let catchImg = req.files?.image[0].path;
-  let catchDocument = req.files?.document[0].path;
+
+  let catchImg = req.file.path
 
   try {
     await User.syncIndexes();
@@ -34,6 +34,84 @@ const register = async (req, res, next) => {
 
     if (!userExist) {
       const newUser = new User({ ...req.body, confirmationCode });
+
+      if (catchImg) {
+        newUser.image = catchImg
+      } else {
+        newUser.image = "https://pic.onlinewebfonts.com/svg/img_181369.png";
+      }
+
+      try {
+        const userSave = await newUser.save();
+
+        if (userSave) {
+          const emailEnv = process.env.EMAIL;
+          const password = process.env.PASSWORD;
+
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: emailEnv,
+              pass: password,
+            },
+          });
+
+          const mailOptions = {
+            from: emailEnv,
+            to: email,
+            subject: "Confirmation code",
+            text: `tu codigo es ${confirmationCode}, gracias por confiar en nosotros ${name}`,
+          };
+
+          transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+              console.log(error);
+              return res.status(404).json({
+                user: userSave,
+                confirmationCode: "error, resend code",
+              });
+            }
+            console.log("Email sent: " + info.response);
+            return res.status(200).json({
+              user: userSave,
+              confirmationCode,
+            });
+          });
+        }
+      } catch (error) {
+        return res.status(404).json(error.message);
+      }
+    } else {
+      if (req.files) {
+        deleteImgCloudinary(catchImg)
+      }
+      return res.status(409).json("this user already exist");
+    }
+  } catch (error) {
+    if (req.files) {
+      deleteImgCloudinary(catchImg)
+    }
+    return next(error);
+  }
+};
+
+const registerAdmin = async (req, res, next) => {
+
+  let catchImg = req.files?.image[0].path
+  let catchDocument = req.files?.document[0].path
+
+  try {
+    await User.syncIndexes();
+    let confirmationCode = randomCode();
+    const { email, name } = req.body;
+
+    const userExist = await User.findOne(
+      { email: req.body.email },
+      { name: req.body.name }
+    );
+
+    if (!userExist) {
+      const newUser = new User({ ...req.body, rol: "admin", confirmationCode });
 
       if (req.files.image) {
         newUser.image = catchImg;
@@ -324,7 +402,7 @@ const sendPassword = async (req, res, next) => {
       from: email,
       to: userDb.email,
       subject: "-----",
-      text: `User: ${userDb.name}. Your new code login is ${passwordSecure} Hemos enviado esto porque tenemos una solicitud de cambio de contraseña, si no has sido ponte en contacto con nosotros, gracias.`,
+      text: `User: ${userDb.name}. Su nuevo codigo de login es ${passwordSecure} Hemos enviado esto porque tenemos una solicitud de cambio de contraseña, si no has sido tú ponte en contacto con nosotros, gracias.`,
     };
     transporter.sendMail(mailOptions, async function (error, info) {
       if (error) {
@@ -397,8 +475,7 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
-  let catchDocument = req.files?.document && req.files?.document[0].path;
+  let catchImg = req.file.path
 
   try {
     await User.syncIndexes();
@@ -424,8 +501,7 @@ const update = async (req, res, next) => {
     try {
       await User.findByIdAndUpdate(req.user._id, patchUser);
 
-      req.files?.image && deleteImgCloudinary(req.user.image);
-      req.files?.document && deleteImgCloudinary(req.user.document);
+      req.file.path && deleteImgCloudinary(req.user.image);
 
       const updateUser = await User.findById(req.user._id);
 
@@ -451,57 +527,66 @@ const update = async (req, res, next) => {
         }
       });
 
-      if (req.files.image) {
+      if (req.file.path) {
         updateUser.image === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
-      if (req.files.document) {
-        updateUser.document === catchDocument
-          ? testUpdate.push({
-              document: true,
-            })
-          : testUpdate.push({
-              document: false,
-            });
-      }
 
       return res.status(200).json({
         updateUser,
         testUpdate,
       });
     } catch (error) {
-      req.files?.image && deleteImgCloudinary(catchImg);
-      req.files?.document && deleteImgCloudinary(catchDocument);
+      req.file.path && deleteImgCloudinary(catchImg);
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && deleteImgCloudinary(catchImg);
-    req.files?.document && deleteImgCloudinary(catchDocument);
+    req.file.path && deleteImgCloudinary(catchImg);
     return next(error);
   }
 };
 
 const deleteUser = async (req, res, next) => {
-  try {
-    const { _id, image, document } = req.user;
-    await User.findByIdAndDelete(_id);
+  const isUser = req.user.rol === "vecino"
+  const isAdmin = req.user.rol === "admin"
+  if (isUser) {
+    try {
+      const { _id, image } = req.user;
+      await User.findByIdAndDelete(_id);
 
-    if (await User.findById(_id)) {
-      return res.status(404).json("not deleted"); ///
-    } else {
-      deleteImgCloudinary(image);
-      deleteImgCloudinary(document);
-      return res.status(200).json("ok delete");
+      if (await User.findById(_id)) {
+        return res.status(404).json("not deleted"); ///
+      } else {
+        deleteImgCloudinary(image);
+        return res.status(200).json("ok delete");
+      }
+    } catch (error) {
+      return next(error);
     }
-  } catch (error) {
-    return next(error);
+  } else if (isAdmin) {
+    try {
+      const { userId } = req.body;
+      const { image } = await User.findById(userId)
+      await User.findByIdAndDelete(userId);
+      const userToDelete = await User.findById(userId)
+
+      if (userToDelete) {
+        return res.status(404).json("not deleted"); ///
+      } else {
+        deleteImgCloudinary(image);
+        return res.status(200).json("ok delete");
+      }
+    } catch (error) {
+      return next(error);
+    }
   }
+
 };
 
 const getAll = async (req, res, next) => {
@@ -511,7 +596,7 @@ const getAll = async (req, res, next) => {
     );
 
     if (allUser.length > 0) {
-      return res.status(200).json(allUser);
+      return res.status(200).json(await User.find().populate("receivedMessages"));
     } else {
       return res.status(404).json("users no found");
     }
@@ -1021,4 +1106,5 @@ module.exports = {
   togglePostedStatements,
   toggleFavEvents,
   toggleFavStatements,
+  registerAdmin
 };
