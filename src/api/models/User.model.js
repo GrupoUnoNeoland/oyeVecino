@@ -45,9 +45,8 @@ const UserSchema = new mongoose.Schema(
     age: {
       type: Number,
     },
-    document: {
-      type: String,
-      required: true,
+    request: {
+      type: { type: mongoose.Schema.Types.ObjectId, ref: "Request" }
     },
     adressChecked: {
       type: Boolean,
