@@ -2,6 +2,7 @@ const User = require("../models/User.model");
 const Rating = require("../models/Rating.model");
 
 //------------------------------------* CREATE RATING--------------------------------------
+
 const createRating = async (req, res, next) => {
   try {
     await Rating.syncIndexes();

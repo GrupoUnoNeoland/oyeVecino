@@ -19,9 +19,8 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const register = async (req, res, next) => {
-
-  let catchImg = req.files?.image[0].path
-  let catchDocument = req.files?.document[0].path
+  let catchImg = req.files?.image[0].path;
+  let catchDocument = req.files?.document[0].path;
 
   try {
     await User.syncIndexes();
@@ -37,15 +36,15 @@ const register = async (req, res, next) => {
       const newUser = new User({ ...req.body, confirmationCode });
 
       if (req.files.image) {
-        newUser.image = catchImg
+        newUser.image = catchImg;
       } else {
         newUser.image = "https://pic.onlinewebfonts.com/svg/img_181369.png";
       }
 
       if (req.files.document) {
-        newUser.document = catchDocument
+        newUser.document = catchDocument;
       } else {
-        return res.status(404).json("error, document not found")
+        return res.status(404).json("error, document not found");
       }
 
       try {
@@ -90,15 +89,15 @@ const register = async (req, res, next) => {
       }
     } else {
       if (req.files) {
-        deleteImgCloudinary(catchImg)
-        deleteImgCloudinary(catchDocument)
+        deleteImgCloudinary(catchImg);
+        deleteImgCloudinary(catchDocument);
       }
       return res.status(409).json("this user already exist");
     }
   } catch (error) {
     if (req.files) {
-      deleteImgCloudinary(catchImg)
-      deleteImgCloudinary(catchDocument)
+      deleteImgCloudinary(catchImg);
+      deleteImgCloudinary(catchDocument);
     }
     return next(error);
   }
@@ -198,22 +197,23 @@ const checkCodeNewUser = async (req, res, next) => {
     if (!userExists) {
       return res.status(404).json("User not found");
     } else {
-      console.log("184", confirmationCode, userExists.confirmationCode)
+      console.log("184", confirmationCode, userExists.confirmationCode);
       if (confirmationCode === userExists.confirmationCode) {
-        console.log("186", confirmationCode, userExists.confirmationCode)
+        console.log("186", confirmationCode, userExists.confirmationCode);
         try {
           await userExists.updateOne({ confirmationCodeChecked: true });
 
           const updateUser = await User.findOne({ email });
 
           return res.status(200).json({
-            testCheckOk: updateUser.confirmationCodeChecked == true ? true : false,
+            testCheckOk:
+              updateUser.confirmationCodeChecked == true ? true : false,
           });
         } catch (error) {
           return res.status(404).json(error.message);
         }
       } else {
-        console.log("199", confirmationCode, userExists.confirmationCode)
+        console.log("199", confirmationCode, userExists.confirmationCode);
         try {
           await User.findByIdAndDelete(userExists._id);
 
@@ -397,8 +397,8 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path
-  let catchDocument = req.files?.document && req.files?.document[0].path
+  let catchImg = req.files?.image && req.files?.image[0].path;
+  let catchDocument = req.files?.document && req.files?.document[0].path;
 
   try {
     await User.syncIndexes();
@@ -424,8 +424,8 @@ const update = async (req, res, next) => {
     try {
       await User.findByIdAndUpdate(req.user._id, patchUser);
 
-      req.files?.image && deleteImgCloudinary(req.user.image)
-      req.files?.document && deleteImgCloudinary(req.user.document)
+      req.files?.image && deleteImgCloudinary(req.user.image);
+      req.files?.document && deleteImgCloudinary(req.user.document);
 
       const updateUser = await User.findById(req.user._id);
 
@@ -454,21 +454,21 @@ const update = async (req, res, next) => {
       if (req.files.image) {
         updateUser.image === catchImg
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       if (req.files.document) {
         updateUser.document === catchDocument
           ? testUpdate.push({
-            document: true,
-          })
+              document: true,
+            })
           : testUpdate.push({
-            document: false,
-          });
+              document: false,
+            });
       }
 
       return res.status(200).json({
@@ -476,13 +476,13 @@ const update = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image && deleteImgCloudinary(catchImg)
-      req.files?.document && deleteImgCloudinary(catchDocument)
+      req.files?.image && deleteImgCloudinary(catchImg);
+      req.files?.document && deleteImgCloudinary(catchDocument);
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && deleteImgCloudinary(catchImg)
-    req.files?.document && deleteImgCloudinary(catchDocument)
+    req.files?.image && deleteImgCloudinary(catchImg);
+    req.files?.document && deleteImgCloudinary(catchDocument);
     return next(error);
   }
 };
@@ -506,7 +506,9 @@ const deleteUser = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const allUser = await User.find()
+    const allUser = await User.find().populate(
+      "neighborhoods servicesOffered servicesDemanded servicesComments eventsComments statementsComments receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents starsReviews"
+    );
 
     if (allUser.length > 0) {
       return res.status(200).json(allUser);
@@ -524,7 +526,9 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const usersById = await User.findById(id);
+    const usersById = await User.findById(id).populate(
+      "neighborhoods servicesOffered servicesDemanded servicesComments eventsComments statementsComments receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents starsReviews"
+    );
     if (usersById) {
       return res.status(200).json(usersById);
     } else {
@@ -997,7 +1001,6 @@ const toggleFavStatements = async (req, res, next) => {
   }
 };
 
-
 module.exports = {
   register,
   sendCode,
@@ -1017,5 +1020,5 @@ module.exports = {
   toggleDemandedService,
   togglePostedStatements,
   toggleFavEvents,
-  toggleFavStatements
+  toggleFavStatements,
 };
