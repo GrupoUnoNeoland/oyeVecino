@@ -9,19 +9,13 @@ const RequestSchema = new mongoose.Schema(
     state: {
       type: String,
       enum: ["rejected", "accepted", "waiting"],
+      default: "waiting",
     },
-    user: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    neighborhood: {
-      type: String,
-      required: true,
-    },
+    neighborhoods: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
+    ],
   },
 
   {

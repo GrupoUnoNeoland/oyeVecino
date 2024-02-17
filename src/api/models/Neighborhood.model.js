@@ -5,10 +5,7 @@ const NeighborhoodSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  city: {
-    type: String,
-    required: true,
-  },
+  city: { type: mongoose.Schema.ObjectId, ref: "City" },
 
   image: {
     type: String,
