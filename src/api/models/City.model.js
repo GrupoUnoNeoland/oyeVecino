@@ -7,6 +7,12 @@ const CitySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    images: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
 
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
