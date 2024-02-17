@@ -15,7 +15,8 @@ const createStatement = async (req, res, next) => {
     const StatementExist = await Statement.findOne({ title: req.body.title });
     if (!StatementExist) {
       const newStatement = new Statement({ ...req.body, images: catchImgs });
-
+      newStatement.users[0] = req.user._id
+      newStatement.neighborhoods[0] = req.user.neighborhoods[0]
       try {
         const StatementSave = await newStatement.save();
 
@@ -169,11 +170,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files.image) {
         updateStatement.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
