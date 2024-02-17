@@ -1,3 +1,4 @@
+const { isAuth } = require("../../middleware/auth.middleware");
 const { upload } = require("../../middleware/files.middleware");
 const {
   createServices,
@@ -15,23 +16,23 @@ const {
 const express = require("express");
 
 const ServiceRoutes = express.Router();
-ServiceRoutes.post("/create", upload.array("images", 5), createServices);
-ServiceRoutes.delete("/delete/:id", deleteServices);
-ServiceRoutes.patch("/add/users/serviceoffered/:id", toggleUsersServiceOffered);
+ServiceRoutes.post("/create", [isAuth], upload.array("images", 5), createServices);
+ServiceRoutes.delete("/delete/:id", [isAuth], deleteServices);
+ServiceRoutes.patch("/add/users/serviceoffered/:id", [isAuth], toggleUsersServiceOffered);
 ServiceRoutes.patch(
-  "/add/users/servicedemanded/:id",
+  "/add/users/servicedemanded/:id", [isAuth],
   toggleUsersServiceDemanded
 );
-ServiceRoutes.patch("/add/neighborhoods/:id", toggleNeighborhoods);
-ServiceRoutes.patch("/add/comments/:id", toggleComments);
-ServiceRoutes.get("/:id", getByIdService);
-ServiceRoutes.get("/", getAllServices);
-ServiceRoutes.get("/byName/:title", getByNameServices);
+ServiceRoutes.patch("/add/neighborhoods/:id", [isAuth], toggleNeighborhoods);
+ServiceRoutes.patch("/add/comments/:id", [isAuth], toggleComments);
+ServiceRoutes.get("/:id", [isAuth], getByIdService);
+ServiceRoutes.get("/", [isAuth], getAllServices);
+ServiceRoutes.get("/byName/:title", [isAuth], getByNameServices);
 ServiceRoutes.patch(
   "/update/service/:id",
-  upload.array("image", 5),
+  upload.array("image", 5), [isAuth],
   updateServices
 );
-ServiceRoutes.post("/add/rating/:id", calculateStarsAverage);
+ServiceRoutes.post("/add/rating/:id", [isAuth], calculateStarsAverage);
 
 module.exports = ServiceRoutes;

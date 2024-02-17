@@ -28,6 +28,7 @@ const ServiceSchema = new mongoose.Schema(
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
+    starReview: { type: mongoose.Schema.Types.ObjectId, ref: "Rating" },
   },
   {
     timestamps: true,

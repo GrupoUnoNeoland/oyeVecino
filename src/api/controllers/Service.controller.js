@@ -15,6 +15,8 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
+      newService.users[0] = req.user._id
+      newService.neighborhoods[0] = req.user.neighborhoods[0]
 
       try {
         const ServiceSave = await newService.save();
@@ -436,11 +438,11 @@ const updateServices = async (req, res, next) => {
       if (req.files.image) {
         updateService.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -462,7 +464,9 @@ const updateServices = async (req, res, next) => {
 const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const serviceById = await Service.findById(id);
+    const serviceById = await Service.findById(id).populate(
+      "users comments neighborhoods"
+    );
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
@@ -475,7 +479,9 @@ const getByIdService = async (req, res, next) => {
 //--------------- GET ALL ---------------------------------------------------------------------------------
 const getAllServices = async (req, res, next) => {
   try {
-    const allServices = await Service.find();
+    const allServices = await Service.find().populate(
+      "users comments neighborhoods"
+    );
     if (allServices.length > 0) {
       return res.status(200).json(allServices);
     } else {
@@ -488,6 +494,26 @@ const getAllServices = async (req, res, next) => {
     });
   }
 };
+
+//--------------- GET ALL ---------------------------------------------------------------------------------
+const getAllServicesStar = async (req, res, next) => {
+  try {
+    const allServices = await Service.find().populate(
+      "users comments neighborhoods"
+    );
+    if (allServices.length > 0) {
+      return res.status(200).json(allServices);
+    } else {
+      return res.status(404).json("Services not found");
+    }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error al buscar - lanzado en el catch",
+      message: error.message,
+    });
+  }
+};
+
 //--------------- GET BY NAME------------------------------------------------------------------------------
 const getByNameServices = async (req, res, next) => {
   try {
@@ -519,18 +545,8 @@ const calculateStarsAverage = async (req, res, next) => {
     }, 0);
 
     const starsAverage = Math.round(totalStars / allStars.length);
+    return starsAverage
 
-    try {
-      await User.findByIdAndUpdate(id, {
-        stars: starsAverage,
-      });
-      const userRated = await User.findById(id);
-      return res
-        .status(200)
-        .json({ message: "User rating media updated", user: userRated });
-    } catch (error) {
-      return res.status(404).json("User rating media not updated");
-    }
   } catch (error) {
     return res
       .status(404)

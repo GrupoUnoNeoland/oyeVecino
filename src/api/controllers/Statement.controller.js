@@ -15,7 +15,8 @@ const createStatement = async (req, res, next) => {
     const StatementExist = await Statement.findOne({ title: req.body.title });
     if (!StatementExist) {
       const newStatement = new Statement({ ...req.body, images: catchImgs });
-
+      newStatement.users[0] = req.user._id
+      newStatement.neighborhoods[0] = req.user.neighborhoods[0]
       try {
         const StatementSave = await newStatement.save();
 
@@ -90,12 +91,13 @@ const deleteStatement = async (req, res, next) => {
   }
 };
 
-//!--------------------getAllEvent---------------------
+//!--------------------getAllStatement---------------------
 
 const getAllStatement = async (req, res, next) => {
   try {
-    const getAllStatement = await Statement.find();
-    /** el find nos devuelve un array */
+    const getAllStatement = await Statement.find().populate(
+      "comments likes users neighborhoods"
+    );
     if (getAllStatement.length > 0) {
       return res.status(200).json(getAllStatement);
     } else {
@@ -114,7 +116,9 @@ const getAllStatement = async (req, res, next) => {
 const getByIdStatement = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const statementById = await Statement.findById(id);
+    const statementById = await Statement.findById(id).populate(
+      "comments likes users neighborhoods"
+    );
     if (statementById) {
       return res.status(200).json(statementById);
     } else {
@@ -166,11 +170,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files.image) {
         updateStatement.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({

@@ -21,6 +21,7 @@ const createMessage = async (req, res, next) => {
 
         newMessage.recipientUser = id;
         newMessage.images = catchImages;
+        newMessage.owner = req.user;
         const savedMessage = await newMessage.save();
 
         try {
@@ -221,6 +222,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientEvent = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -264,6 +266,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientStatement = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -307,6 +310,8 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientService = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user._id;
+      console.log("🚀 ~ createMessage ~ newMessage:", newMessage);
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -322,7 +327,7 @@ const createMessage = async (req, res, next) => {
               },
             });
             return res.status(200).json({
-              event: await Event.findById(id),
+              message: await Event.findById(id),
               comment: savedMessage,
             });
           } catch (error) {
@@ -342,8 +347,8 @@ const createMessage = async (req, res, next) => {
           req.files.forEach((image) => deleteImgCloudinary(image.path));
         }
         return res.status(404).json({
-          error: "message was not created",
-          idMessage: newMessage._id,
+          message: "message was not created",
+          error: error.message,
         });
       }
     } else {
@@ -361,7 +366,26 @@ const createMessage = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-//---------------------------------------------------------------------
+
+//---------------------GET BY ID------------------------------------------
+
+const getByIdMessage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const messageById = await Message.findById(id).populate(
+      "recipientEvent recipientService recipientUser recipientStatement"
+    );
+    if (messageById) {
+      return res.status(200).json(await Message.findById(id).populate());
+    } else {
+      return res.status(404).json("no se ha encontrado el mensaje");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
+//-------------------------------------
 
 const updateMessage = async (req, res, next) => {
   try {
@@ -546,7 +570,9 @@ const deleteMessege = async (req, res, next) => {
 
 const getAllMessages = async (req, res, next) => {
   try {
-    const allMessages = await Message.find(); //.populate("?");
+    const allMessages = await Message.find().populate(
+      "recipientEvent recipientService recipientUser recipientStatement"
+    );
 
     if (allMessages.length > 0) {
       return res.status(200).json(allMessages);
@@ -566,4 +592,5 @@ module.exports = {
   updateMessage,
   deleteMessege,
   getAllMessages,
+  getByIdMessage,
 };

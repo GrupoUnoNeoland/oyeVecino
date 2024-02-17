@@ -2,6 +2,7 @@ const User = require("../models/User.model");
 const Rating = require("../models/Rating.model");
 
 //------------------------------------* CREATE RATING--------------------------------------
+
 const createRating = async (req, res, next) => {
   try {
     await Rating.syncIndexes();
@@ -10,7 +11,6 @@ const createRating = async (req, res, next) => {
       stars: req.body?.stars,
       userServiceTaker: req.user._id,
       userServiceProvider: req.params.id,
-      companyServiceProvider: req.body?.company,
     };
 
     const newRating = new Rating(customBody);
@@ -51,4 +51,18 @@ const createRating = async (req, res, next) => {
   }
 };
 
-module.exports = { createRating };
+const calcultatePoints = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const userStars = await User.stars.findById(id);
+    // const getPoints = await User.points.findById(id);
+    if (!userStars) {
+      return res.status(404).json("User stars not found");
+    }
+  } catch (error) {
+    return res.status(404).json("can't acces to points");
+  }
+};
+
+module.exports = { createRating, calcultatePoints };
