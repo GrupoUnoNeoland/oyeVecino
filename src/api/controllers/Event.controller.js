@@ -91,7 +91,9 @@ const deleteEvent = async (req, res, next) => {
 
 const getAllEvent = async (req, res, next) => {
   try {
-    const allevent = await Event.find();
+    const allevent = await Event.find().populate(
+      "comments likes neighborhoods sponsors"
+    );
     /** el find nos devuelve un array */
     if (allevent.length > 0) {
       return res.status(200).json(allevent);
@@ -111,7 +113,9 @@ const getAllEvent = async (req, res, next) => {
 const getByIdEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const eventById = await Event.findById(id);
+    const eventById = await Event.findById(id).populate(
+      "comments likes neighborhoods sponsors"
+    );
     if (eventById) {
       return res.status(200).json(eventById);
     } else {

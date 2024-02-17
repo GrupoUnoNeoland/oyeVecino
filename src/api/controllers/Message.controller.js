@@ -231,6 +231,25 @@ const createMessage = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
+
+//---------------------GET BY ID------------------------------------------
+
+const getByIdMessage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const messageById = await Message.findById(id).populate(
+      "recipientEvent recipientService recipientUser recipientStatement"
+    );
+    if (messageById) {
+      return res.status(200).json(await Message.findById(id).populate());
+    } else {
+      return res.status(404).json("no se ha encontrado el mensaje");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
 //-------------------------------------
 // todo cambio files
 const updateMessage = async (req, res, next) => {
@@ -340,7 +359,9 @@ const deleteMessege = async (req, res, next) => {
 
 const getAllMessages = async (req, res, next) => {
   try {
-    const allMessages = await Message.find(); //.populate("?");
+    const allMessages = await Message.find().populate(
+      "recipientEvent recipientService recipientUser recipientStatement"
+    );
 
     if (allMessages.length > 0) {
       return res.status(200).json(allMessages);
@@ -368,4 +389,5 @@ module.exports = {
   updateMessage,
   deleteMessege,
   getAllMessages,
+  getByIdMessage,
 };

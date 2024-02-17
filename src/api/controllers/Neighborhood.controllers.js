@@ -35,6 +35,47 @@ const createNeighborhood = async (req, res, next) => {
     });
   }
 };
+
+//---------------------GET BY ID------------------------------------------
+
+const getByIdNeighborhood = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const neighborhoodById = await Neighborhood.findById(id).populate(
+      "users services events statements"
+    );
+
+    if (neighborhoodById) {
+      return res.status(200).json(neighborhoodById);
+    } else {
+      return res.status(404).json("no se ha encontrado el neighborhood");
+    }
+  } catch (error) {
+    return res.status(404).json(error.message);
+  }
+};
+
+//--------------------getAllNeighborhood---------------------
+
+const getAllNeighborhood = async (req, res, next) => {
+  try {
+    const allneighborhood = await Neighborhood.find().populate(
+      "events statements users events"
+    );
+
+    if (allneighborhood.length > 0) {
+      return res.status(200).json(allneighborhood);
+    } else {
+      return res.status(404).json("no se han encontrado barrios");
+    }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error al buscar - lanzado en el catch",
+      message: error.message,
+    });
+  }
+};
+
 //-------------------------------------------------------------------------------------------------------
 
 const deleteNeighborhood = async (req, res, next) => {
@@ -521,4 +562,6 @@ module.exports = {
   toggleServices,
   toggleEvents,
   toggleStatements,
+  getByIdNeighborhood,
+  getAllNeighborhood,
 };

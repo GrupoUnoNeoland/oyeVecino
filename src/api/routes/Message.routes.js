@@ -5,6 +5,7 @@ const {
   updateMessage,
   deleteMessege,
   getAllMessages,
+  getByIdMessage,
 } = require("../controllers/Message.controller");
 const express = require("express");
 
@@ -16,5 +17,6 @@ MessageRoutes.patch("/update/:id", upload.array("images", 2), updateMessage);
 
 MessageRoutes.delete("/delete/:id", deleteMessege);
 MessageRoutes.get("/getallmessages/", getAllMessages);
+MessageRoutes.get("/:id", getByIdMessage);
 
 module.exports = MessageRoutes;

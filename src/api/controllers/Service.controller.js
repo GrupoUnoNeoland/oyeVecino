@@ -455,7 +455,9 @@ const updateServices = async (req, res, next) => {
 const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const serviceById = await Service.findById(id);
+    const serviceById = await Service.findById(id).populate(
+      "users comments neighborhoods"
+    );
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
@@ -468,7 +470,9 @@ const getByIdService = async (req, res, next) => {
 //--------------- GET ALL ---------------------------------------------------------------------------------
 const getAllServices = async (req, res, next) => {
   try {
-    const allServices = await Service.find();
+    const allServices = await Service.find().populate(
+      "users comments neighborhoods"
+    );
     if (allServices.length > 0) {
       return res.status(200).json(allServices);
     } else {
@@ -481,6 +485,26 @@ const getAllServices = async (req, res, next) => {
     });
   }
 };
+
+//--------------- GET ALL ---------------------------------------------------------------------------------
+const getAllServicesStar = async (req, res, next) => {
+  try {
+    const allServices = await Service.find().populate(
+      "users comments neighborhoods"
+    );
+    if (allServices.length > 0) {
+      return res.status(200).json(allServices);
+    } else {
+      return res.status(404).json("Services not found");
+    }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error al buscar - lanzado en el catch",
+      message: error.message,
+    });
+  }
+};
+
 //--------------- GET BY NAME------------------------------------------------------------------------------
 const getByNameServices = async (req, res, next) => {
   try {

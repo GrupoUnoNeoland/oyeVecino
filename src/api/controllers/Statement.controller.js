@@ -90,12 +90,13 @@ const deleteStatement = async (req, res, next) => {
   }
 };
 
-//!--------------------getAllEvent---------------------
+//!--------------------getAllStatement---------------------
 
 const getAllStatement = async (req, res, next) => {
   try {
-    const getAllStatement = await Statement.find();
-    /** el find nos devuelve un array */
+    const getAllStatement = await Statement.find().populate(
+      "comments likes users neighborhoods"
+    );
     if (getAllStatement.length > 0) {
       return res.status(200).json(getAllStatement);
     } else {
@@ -114,7 +115,9 @@ const getAllStatement = async (req, res, next) => {
 const getByIdStatement = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const statementById = await Statement.findById(id);
+    const statementById = await Statement.findById(id).populate(
+      "comments likes users neighborhoods"
+    );
     if (statementById) {
       return res.status(200).json(statementById);
     } else {

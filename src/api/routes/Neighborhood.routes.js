@@ -8,6 +8,8 @@ const {
   toggleServices,
   toggleEvents,
   toggleStatements,
+  getByIdNeighborhood,
+  getAllNeighborhood,
 } = require("../controllers/Neighborhood.controllers");
 const express = require("express");
 
@@ -21,6 +23,8 @@ NeighborhoodRoutes.patch(
   upload.single("image"),
   updateNeighborhood
 );
+NeighborhoodRoutes.get("/:id", getByIdNeighborhood);
+NeighborhoodRoutes.get("/", getAllNeighborhood);
 NeighborhoodRoutes.patch("/add/:id", toggleUsers);
 NeighborhoodRoutes.patch("/add/services/:id", toggleServices);
 NeighborhoodRoutes.patch("/add/events/:id", toggleEvents);
