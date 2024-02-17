@@ -21,6 +21,7 @@ const createMessage = async (req, res, next) => {
 
         newMessage.recipientUser = id;
         newMessage.images = catchImages;
+        newMessage.owner = req.user;
         const savedMessage = await newMessage.save();
 
         try {
@@ -221,6 +222,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientEvent = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -264,6 +266,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientStatement = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -322,7 +325,7 @@ const createMessage = async (req, res, next) => {
               },
             });
             return res.status(200).json({
-              event: await Event.findById(id),
+              message: await Event.findById(id),
               comment: savedMessage,
             });
           } catch (error) {
