@@ -10,7 +10,6 @@ const createRating = async (req, res, next) => {
       stars: req.body?.stars,
       userServiceTaker: req.user._id,
       userServiceProvider: req.params.id,
-      companyServiceProvider: req.body?.company,
     };
 
     const newRating = new Rating(customBody);
