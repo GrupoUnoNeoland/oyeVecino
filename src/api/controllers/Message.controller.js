@@ -310,6 +310,8 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientService = id;
       newMessage.images = catchImages;
+      newMessage.owner = req.user._id;
+      console.log("🚀 ~ createMessage ~ newMessage:", newMessage);
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -345,8 +347,8 @@ const createMessage = async (req, res, next) => {
           req.files.forEach((image) => deleteImgCloudinary(image.path));
         }
         return res.status(404).json({
-          error: "message was not created",
-          idMessage: newMessage._id,
+          message: "message was not created",
+          error: error.message,
         });
       }
     } else {

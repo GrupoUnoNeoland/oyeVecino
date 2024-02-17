@@ -51,4 +51,18 @@ const createRating = async (req, res, next) => {
   }
 };
 
-module.exports = { createRating };
+const calcultatePoints = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const userStars = await User.stars.findById(id);
+    // const getPoints = await User.points.findById(id);
+    if (!userStars) {
+      return res.status(404).json("User stars not found");
+    }
+  } catch (error) {
+    return res.status(404).json("can't acces to points");
+  }
+};
+
+module.exports = { createRating, calcultatePoints };
