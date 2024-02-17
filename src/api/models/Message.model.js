@@ -23,15 +23,14 @@ const MessageSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    stars: {
-      type: Number,
-    },
-    recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    recipientUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    recipientStatement: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    services: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
+    recipientEvent: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
+    recipientService: { type: mongoose.Schema.Types.ObjectId, ref: "Service" },
+    recipientUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    recipientStatement: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Statement",
+    },
   },
   {
     timestamps: true,
