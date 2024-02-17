@@ -7,14 +7,14 @@ const Neighborhood = require("../models/Neighborhood.model.js");
 const User = require("../models/User.model");
 
 const createEvent = async (req, res, next) => {
-  let catchImgs = req?.files.map((file) => file.path);
+  let catchImgs = req?.files?.map((file) => file.path);
 
   try {
     await Event.syncIndexes();
 
     const EventExist = await Event.findOne({ title: req.body.title });
     if (!EventExist) {
-      const newEvent = new Event({ ...req.body, images: catchImgs });
+      const newEvent = new Event({ ...req.body, images: catchImgs, organizer: req.user._id });
 
       try {
         const EventSave = await newEvent.save();
@@ -30,12 +30,12 @@ const createEvent = async (req, res, next) => {
         return res.status(404).json(error.message);
       }
     } else {
-      catchImgs.forEach((image) => deleteImgCloudinary(image));
+      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
 
       return res.status(409).json("this event already exist");
     }
   } catch (error) {
-    catchImgs.forEach((image) => deleteImgCloudinary(image));
+    catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -163,11 +163,11 @@ const updateEvent = async (req, res, next) => {
       if (req.files.image) {
         updateEvent.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
