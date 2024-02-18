@@ -11,6 +11,7 @@ const {
   toggleStatements,
   getByIdNeighborhood,
   getAllNeighborhood,
+  togglecityInNeighborhood,
 } = require("../controllers/Neighborhood.controllers");
 const express = require("express");
 
@@ -36,5 +37,6 @@ NeighborhoodRoutes.patch("/add/:id", [isAuthAdmin], toggleUsers);
 NeighborhoodRoutes.patch("/add/services/:id", [isAuth], toggleServices);
 NeighborhoodRoutes.patch("/add/events/:id", [isAuth], toggleEvents);
 NeighborhoodRoutes.patch("/add/statements/:id", [isAuth], toggleStatements);
+NeighborhoodRoutes.patch("/add/city/:id", [isAuth], togglecityInNeighborhood);
 
 module.exports = NeighborhoodRoutes;
