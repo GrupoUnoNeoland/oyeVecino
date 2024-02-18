@@ -23,7 +23,10 @@ const ServiceSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    city: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
+    },
+    provider: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },

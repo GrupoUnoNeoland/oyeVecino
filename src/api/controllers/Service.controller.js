@@ -15,8 +15,7 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
-      newService.users[0] = req.user._id;
-      newService.neighborhoods[0] = req.user.neighborhoods[0];
+      newService.provider[0] = req.user._id;
 
       try {
         const ServiceSave = await newService.save();
@@ -112,7 +111,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
       const arrayIdUsers = users.split(",");
       Promise.all(
         arrayIdUsers.map(async (user) => {
-          if (serviceById.users.includes(user)) {
+          if (serviceById.provider.includes(user)) {
             try {
               await Service.findByIdAndUpdate(id, {
                 $pull: { users: user },
