@@ -45,6 +45,8 @@ app.use("/api/v1/cities/", CityRoutes);
 
 const RequestRoutes = require("./src/api/routes/Request.routes");
 app.use("/api/v1/requests/", RequestRoutes);
+const LikeRoutes = require("./src/api/routes/Like.routes");
+app.use("/api/v1/like/", LikeRoutes);
 
 app.use("*", (req, res, next) => {
   const error = new Error("Route not found");
