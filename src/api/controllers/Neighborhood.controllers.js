@@ -3,6 +3,7 @@ const City = require("../models/City.model");
 const Event = require("../models/Event.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
+const Request = require("../models/Request.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
@@ -83,79 +84,61 @@ const getAllNeighborhood = async (req, res, next) => {
 const deleteNeighborhood = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const NeighborhoodDelete = await Neighborhood.findById(id);
+    const neighborhoodDelete = await Neighborhood.findById(id);
+    const neighborhoodImage = neighborhoodDelete.image;
 
-    const image = NeighborhoodDelete.image;
-    await Neighborhood.findByIdAndDelete(id);
-    deleteImgCloudinary(image);
-    if (await Neighborhood.findById(id)) {
-      return res.status(404).json("not deleted");
-    } else {
+    if (neighborhoodDelete) {
       try {
-        await User.updateMany(
-          { neighborhoods: id },
-          { $pull: { neighborhoods: id } }
-        );
+        await Neighborhood.findByIdAndDelete(id);
         try {
-          await Service.deleteMany({ neighborhoods: [id] });
-
+          deleteImgCloudinary(neighborhoodImage);
+          await City.updateMany(
+            { neighborhoods: id },
+            {
+              $pull: { neighborhoods: id },
+            }
+          );
           try {
-            await Event.deleteMany({ neighborhoods: [id] });
-
+            await User.deleteMany({ neighborhoods: id });
             try {
-              await Statement.deleteMany({ neighborhoods: [id] });
+              await Service.deleteMany({ neighborhoods: id });
               try {
-                await Message.deleteMany({ neighborhoods: [id] });
-                return res.status(200).json("Message in service deleted ok");
+                await Statement.deleteMany({ neighborhoods: id });
+                try {
+                  await Event.deleteMany({ neighborhoods: id });
+                  try {
+                    await Request.deleteMany({ neighborhoods: id });
+                    return res.status(200).json("all request deleted");
+                  } catch (error) {
+                    return res.status(404).json("requests not deleted");
+                  }
+                } catch (error) {
+                  return res.status(404).json("event not deleted");
+                }
               } catch (error) {
-                return res
-                  .status(404)
-                  .json("Message in neighborhood not deleted");
+                return res.status(404).json("statement not deleted");
               }
             } catch (error) {
-              return res
-                .status(404)
-                .json("Statement in neighborhood not deleted");
+              return res.status(404).json("service not deleted");
             }
           } catch (error) {
-            return res.status(404).json("event in neighborhood not deleted");
+            return res.status(404).json("user not deleted");
           }
         } catch (error) {
-          ("user in neighborhood not deleted");
+          return res.status(404).json("neighborhoods key not updated in city");
         }
       } catch (error) {
-        return res.status(404).json("user in neighborhood not deleted");
+        return res.status(404).json("neighborhood not deleted");
       }
+    } else {
+      return res.status(404).json("neighborhood not found");
     }
   } catch (error) {
-    return next(error);
+    return res.status(404).json(error.message);
   }
 };
 
 //----------------------------------------------------------------------------------------------------------
-
-const checkNewNeighborhood = async (req, res, next) => {
-  try {
-    const { postalCode } = req.body;
-
-    const neighborhoddExists = await Neighborhood.findOne({ postalCode });
-
-    if (!neighborhoddExists) {
-      return (
-        res.status(404).json("Neighborhood not found") &&
-        deleteImgCloudinary(neighborhoddExists.image)
-      );
-    } else {
-      return res.status(200).json({
-        neighborhoddExists,
-        check: true,
-      });
-    }
-  } catch (error) {
-    return next(setError(500, error.message || "General error check code"));
-  }
-};
-//------------------------------------------------------------------------------------------------------
 
 const updateNeighborhood = async (req, res, next) => {
   await Neighborhood.syncIndexes();
@@ -212,12 +195,12 @@ const updateNeighborhood = async (req, res, next) => {
 
         if (acc > 0) {
           return res.status(404).json({
-            dataTest: test,
+            dataTest: await Neighborhood.findById(id),
             update: false,
           });
         } else {
           return res.status(200).json({
-            dataTest: test,
+            dataTest: await Neighborhood.findById(id),
             update: true,
           });
         }
@@ -482,7 +465,7 @@ const toggleStatements = async (req, res, next) => {
     const { statements } = req.body;
 
     const neighborhoodById = await Neighborhood.findById(id);
-    console.log(id);
+
     if (neighborhoodById) {
       const arrayIdstatements = statements.split(",");
 
@@ -628,7 +611,7 @@ const togglecityInNeighborhood = async (req, res, next) => {
 module.exports = {
   createNeighborhood,
   deleteNeighborhood,
-  checkNewNeighborhood,
+
   updateNeighborhood,
   toggleUsers,
   toggleServices,

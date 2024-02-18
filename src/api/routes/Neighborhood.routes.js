@@ -3,7 +3,7 @@ const { upload } = require("../../middleware/files.middleware");
 const {
   createNeighborhood,
   deleteNeighborhood,
-  checkNewNeighborhood,
+
   updateNeighborhood,
   toggleUsers,
   toggleServices,
@@ -24,7 +24,7 @@ NeighborhoodRoutes.post(
   createNeighborhood
 );
 NeighborhoodRoutes.delete("/delete/:id", [isAuthAdmin], deleteNeighborhood);
-NeighborhoodRoutes.post("/check", [isAuthAdmin], checkNewNeighborhood);
+
 NeighborhoodRoutes.patch(
   "/update/:id",
   [isAuthAdmin],
