@@ -232,7 +232,7 @@ const toggleUser = async (req, res, next) => {
 
       Promise.all(
         arrayIduser.map(async (user, index) => {
-          if (statementById.users.includes(user)) {
+          if (statementById.owner.includes(user)) {
             try {
               await Statement.findByIdAndUpdate(id, {
                 $pull: { users: user },
@@ -281,7 +281,7 @@ const toggleUser = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Statement.findById(id).populate("users"),
+            dataUpdate: await Statement.findById(id).populate("owner"),
           });
         });
     } else {
