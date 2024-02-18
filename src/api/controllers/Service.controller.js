@@ -32,12 +32,12 @@ const createServices = async (req, res, next) => {
         return res.status(404).json(error.message);
       }
     } else {
-      catchImgs.forEach((image) => deleteImgCloudinary(image));
+      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
 
       return res.status(409).json("this service already exist");
     }
   } catch (error) {
-    catchImgs.forEach((image) => deleteImgCloudinary(image));
+    catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -548,14 +548,23 @@ const getAllServices = async (req, res, next) => {
   }
 };
 
-//--------------- GET ALL ---------------------------------------------------------------------------------
+//--------------- GET ALL OF STARS ---------------------------------------------------------------------------------
 const getAllServicesStar = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "users comments neighborhoods"
+      "starReview users comments neighborhoods"
     );
+
     if (allServices.length > 0) {
-      return res.status(200).json(allServices);
+      const allServicesStar = allServices.map((service) => {
+        const stars = service?.starReview?.stars || 0;
+        const obj = { ...service };
+        obj.stars = stars;
+        return obj;
+      });
+
+      allServicesStar.sort((a, b) => b.stars - a.stars);
+      return res.status(200).json({ services: allServicesStar });
     } else {
       return res.status(404).json("Services not found");
     }
@@ -619,4 +628,5 @@ module.exports = {
   updateServices,
   calculateStarsAverage,
   toggleCity,
+  getAllServicesStar,
 };

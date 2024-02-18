@@ -17,6 +17,7 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 const Rating = require("../models/Rating.model");
+const City = require("../models/City.model");
 
 dotenv.config();
 
@@ -440,8 +441,6 @@ const sendPassword = async (req, res, next) => {
 };
 
 const modifyPassword = async (req, res, next) => {
-  console.log("req.user", req.user);
-
   try {
     const { password, newPassword } = req.body;
     const { _id } = req.user;
@@ -530,11 +529,11 @@ const update = async (req, res, next) => {
       if (req.file.path) {
         updateUser.image === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -596,7 +595,7 @@ const getAll = async (req, res, next) => {
     if (allUser.length > 0) {
       return res
         .status(200)
-        .json(await User.find().populate("receivedMessages"));
+        .json(await User.find());
     } else {
       return res.status(404).json("users no found");
     }
@@ -688,6 +687,76 @@ const toggleNeighborhood = async (req, res, next) => {
             dataUpdate: await User.findById(id).populate("neighborhoods"),
           });
         });
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleCity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { city } = req.body;
+
+    const userById = await User.findById(id);
+
+    if (userById) {
+      if (userById.city.includes(city)) {
+        try {
+          await City.findByIdAndUpdate(city, {
+            $pull: { users: id },
+          });
+          try {
+            await User.findByIdAndUpdate(id, {
+              $pull: { city: city },
+            });
+            return res.status(200).json({
+              dataUpdate: await User.findById(id).populate("city"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in user",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update user in city",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await City.findByIdAndUpdate(city, {
+            $push: { users: id },
+          });
+          try {
+            await User.findByIdAndUpdate(id, {
+              $push: { city: city },
+            });
+            return res.status(200).json({
+              dataUpdate: await User.findById(id).populate("city"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in user",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update user in city",
+            message: error.message,
+          }) && next(error);
+        }
+      }
     } else {
       return res.status(404).json("this user do not exist");
     }
@@ -1107,4 +1176,5 @@ module.exports = {
   toggleFavEvents,
   toggleFavStatements,
   registerAdmin,
+  toggleCity
 };

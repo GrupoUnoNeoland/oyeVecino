@@ -232,7 +232,7 @@ const deleteCity = async (req, res, next) => {
 const getByIdCity = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const cityById = await City.findById(id);
+    const cityById = await City.findById(id).populate("neighborhoods");
     if (cityById) {
       return res.status(200).json({
         dataUpdate: await City.findById(id).populate("neighborhoods users"),
@@ -248,7 +248,7 @@ const getByIdCity = async (req, res, next) => {
 
 const getAllCity = async (req, res, next) => {
   try {
-    const allCities = await City.find();
+    const allCities = await City.find().populate("neighborhoods");
     if (allCities.length > 0) {
       return res.status(200).json({
         dataUpdate: await City.find().populate("neighborhoods users"),

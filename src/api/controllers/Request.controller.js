@@ -233,7 +233,9 @@ const deleteRequest = async (req, res, next) => {
 const getByIdRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const requestById = await Request.findById(id);
+    const requestById = await Request.findById(id).populate(
+      "user neighborhoods"
+    );
     if (requestById) {
       return res.status(200).json({
         dataUpdate: await Request.findById(id).populate("neighborhoods user"),
@@ -250,7 +252,7 @@ const getByIdRequest = async (req, res, next) => {
 
 const getAllRequest = async (req, res, next) => {
   try {
-    const allRequests = await Request.find();
+    const allRequests = await Request.find().populate("user neighborhoods");
     if (allRequests.length > 0) {
       return res.status(200).json({
         dataUpdate: await Request.find().populate("neighborhoods user"),

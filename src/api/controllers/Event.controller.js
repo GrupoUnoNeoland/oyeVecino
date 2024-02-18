@@ -14,7 +14,11 @@ const createEvent = async (req, res, next) => {
 
     const EventExist = await Event.findOne({ title: req.body.title });
     if (!EventExist) {
-      const newEvent = new Event({ ...req.body, images: catchImgs, organizer: req.user._id });
+      const newEvent = new Event({
+        ...req.body,
+        images: catchImgs,
+        organizer: req.user._id,
+      });
 
       try {
         const EventSave = await newEvent.save();
@@ -69,6 +73,17 @@ const deleteEvent = async (req, res, next) => {
               { events: id },
               { $pull: { events: id } }
             );
+            try {
+              await Message.updateMany(
+                { recipientEvent: id },
+                { $pull: { recipientEvent: id } }
+              );
+              return res.status(200).json("service deleted ok");
+            } catch (error) {
+              return res
+                .status(404)
+                .json("recipientEvent not deleted from message");
+            }
             return res.status(200).json("ok deleted");
           } catch (error) {
             return res
@@ -84,6 +99,33 @@ const deleteEvent = async (req, res, next) => {
     }
   } catch (error) {
     return res.status(404).json(error.message);
+  }
+};
+
+//--------------- GET ALL OF LIKE ---------------------------------------------------------------------------------
+
+const getAllEventsLike = async (req, res, next) => {
+  try {
+    const allEvents = await Event.find().populate("likes");
+    console.log(allEvents);
+    // if (allevent.length > 0) {
+    //   const allServicesStar = allServices.map((service) => {
+    //     const stars = service?.starReview?.stars || 0;
+    //     const obj = { ...service };
+    //     obj.stars = stars;
+    //     return obj;
+    //   });
+
+    //   allServicesStar.sort((a, b) => b.stars - a.stars);
+    //   return res.status(200).json({ services: allServicesStar });
+    // } else {
+    //   return res.status(404).json("Services not found");
+    // }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error al buscar - lanzado en el catch",
+      message: error.message,
+    });
   }
 };
 
@@ -167,11 +209,11 @@ const updateEvent = async (req, res, next) => {
       if (req.files.image) {
         updateEvent.images === catchImg
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -511,4 +553,5 @@ module.exports = {
   updateEvent,
   toggleSponsor,
   toggleLike,
+  getAllEventsLike,
 };
