@@ -1,4 +1,5 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const City = require("../models/City.model");
 const Event = require("../models/Event.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
@@ -552,6 +553,78 @@ const toggleStatements = async (req, res, next) => {
   }
 };
 
+//-----------------------------toggle cityes:
+const togglecityInNeighborhood = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const cityId = req.body.city;
+
+    const cityById = await City.findById(cityId);
+    const neighborhoodById = await Neighborhood.findById(id);
+
+    if (cityById) {
+      if (cityById.neighborhoods.includes(id)) {
+        try {
+          await City.findByIdAndUpdate(cityId, {
+            $pull: { neighborhoods: id },
+          });
+          try {
+            await Neighborhood.findByIdAndUpdate(id, {
+              $pull: { city: cityId },
+            });
+            return res.status(200).json({
+              dataUpdate: await Neighborhood.findById(id),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update neighborhood in city",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await City.findByIdAndUpdate(cityId, {
+            $push: { neighborhoods: id },
+          });
+          try {
+            await Neighborhood.findByIdAndUpdate(id, {
+              $push: { city: cityId },
+            });
+            return res.status(200).json({
+              dataUpdate: await Neighborhood.findById(id).populate("city"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update neighborhood in city",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this city doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createNeighborhood,
   deleteNeighborhood,
@@ -563,4 +636,5 @@ module.exports = {
   toggleStatements,
   getByIdNeighborhood,
   getAllNeighborhood,
+  togglecityInNeighborhood,
 };
