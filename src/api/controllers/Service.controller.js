@@ -32,12 +32,12 @@ const createServices = async (req, res, next) => {
         return res.status(404).json(error.message);
       }
     } else {
-      catchImgs.forEach((image) => deleteImgCloudinary(image));
+      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
 
       return res.status(409).json("this service already exist");
     }
   } catch (error) {
-    catchImgs.forEach((image) => deleteImgCloudinary(image));
+    catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
