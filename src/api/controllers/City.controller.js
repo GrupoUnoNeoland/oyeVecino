@@ -1,6 +1,7 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const City = require("../models/City.model");
 const Neighborhood = require("../models/Neighborhood.model");
+const User = require("../models/User.model");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -38,77 +39,191 @@ const createCity = async (req, res, next) => {
   }
 };
 
+const toggleNeighborhoodInCity = async (req, res, next) => {
+  try {
+    const { id: cityId } = req.params;
+    const id = req.body.neighborhood;
+
+    const cityById = await City.findById(cityId);
+    const neighborhoodById = await Neighborhood.findById(id);
+
+    if (cityById) {
+      if (cityById.neighborhoods.includes(id)) {
+        try {
+          await City.findByIdAndUpdate(cityId, {
+            $pull: { neighborhoods: id },
+          });
+          try {
+            await Neighborhood.findByIdAndUpdate(id, {
+              $pull: { city: cityId },
+            });
+            return res.status(200).json({
+              dataUpdate: await Neighborhood.findById(id),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update neighborhood in city",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await City.findByIdAndUpdate(cityId, {
+            $push: { neighborhoods: id },
+          });
+          try {
+            await Neighborhood.findByIdAndUpdate(id, {
+              $push: { city: cityId },
+            });
+            return res.status(200).json({
+              dataUpdate: await Neighborhood.findById(id).populate("city"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update neighborhood in city",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this city doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleUserInCity = async (req, res, next) => {
+  try {
+    const { id: city } = req.params;
+    const { userId: id } = req.body;
+    console.log("Userid", id);
+
+    const userById = await User.findById(id);
+    console.log("userById", userById);
+
+    if (userById) {
+      if (userById.city.includes(city)) {
+        try {
+          await User.findByIdAndUpdate(id, {
+            $pull: { city: city },
+          });
+          try {
+            await City.findByIdAndUpdate(city, {
+              $pull: { users: id },
+            });
+            return res.status(200).json({
+              dataUpdate: await City.findById(city).populate(
+                "neighborhoods users"
+              ),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update user in city",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update city in user",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await City.findByIdAndUpdate(city, {
+            $push: { users: id },
+          });
+          try {
+            await User.findByIdAndUpdate(id, {
+              $push: { city: city },
+            });
+            return res.status(200).json({
+              dataUpdate: await User.findById(id).populate("city"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update city in user",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update user in city",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this user do not exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 //------------- delete
 const deleteCity = async (req, res, next) => {
   try {
     const { id } = req.params;
     const cityDelete = await City.findById(id);
-    const cityDeleteImgs = cityDelete.images;
-    const PORT = process.env.PORT;
-    const neighborhoods = cityDelete.neighborhoods;
-    // await City.findByIdAndDelete(id);
+    const cityImages = cityDelete.images;
 
-    if (false) {
-      return res.status(404).json("not deleted");
-    } else {
-      cityDeleteImgs.forEach((image) => {
-        deleteImgCloudinary(image);
-      });
-
-      //try {
-      // await User.deleteMany({ city: id });
+    if (cityDelete) {
       try {
-        console.log(await Service.find("65cfefbb040396cbf9099126"));
-        /* try {
-          await Service.deleteMany({
-            neighborhoods: "65cfefbb040396cbf9099126",
-          });
-          try {
-            await Statement.deleteMany({
-              neighborhoods: ["65cfefbb040396cbf9099126"],
-            });
-
-            try {
-              await Event.deleteMany({
-                neighborhoods: ["65cfc4b561e49b8275470eb5"],
-              });
-              try {
-                await Message.deleteMany({
-                  neighborhoods: ["65cfc4b561e49b8275470eb5"],
-                });
-                return res.status(200).json("messages deleted");
-              } catch (error) {
-                return res.status(404).json("message not deleted");
-              }
-            } catch (error) {
-              return res.status(404).json("event not deleted");
+        await City.findByIdAndDelete(id);
+        try {
+          cityImages.forEach((image) => deleteImgCloudinary(image));
+          await User.updateMany(
+            { city: id },
+            {
+              $pull: { city: id },
             }
+          );
+          try {
+            await Neighborhood.updateMany(
+              { city: id },
+              {
+                $pull: { city: id },
+              }
+            );
+            return res.status(200).json("city key updated in neighborhood");
           } catch (error) {
-            return res.status(404).json("statement not deleted");
+            return res.status(404).json("city key not updated in neighborhood");
           }
         } catch (error) {
-          return res.status(404).json("service not deleted");
+          return res.status(404).json("city key not updated in user");
         }
-        /*neighborhoods.forEach((neighborhood) => {
-          return res.redirect(
-            307,
-            `http://localhost:${PORT}/api/v1/neighborhoods/delete/${neighborhood}`
-          );
-        });
-
-        /*  await Neighborhood.deleteMany({ city: id });
-        return res.status(200).json({
-          message: "Neighborhoods deleted",
-        });*/
       } catch (error) {
-        return res.status(404).json("neighborhoods not deleted");
+        return res.status(404).json("City not deleted");
       }
-      // } catch (error) {
-      //  return res.status(404).json("city not deleted");
-      //    }
+    } else {
+      return res.status(404).json("City not found");
     }
   } catch (error) {
-    return res.status(404).json("nothing deleted");
+    return res.status(404).json(error.message);
   }
 };
 
@@ -119,7 +234,9 @@ const getByIdCity = async (req, res, next) => {
     const { id } = req.params;
     const cityById = await City.findById(id);
     if (cityById) {
-      return res.status(200).json(cityById);
+      return res.status(200).json({
+        dataUpdate: await City.findById(id).populate("neighborhoods users"),
+      });
     } else {
       return res.status(404).json("city not found");
     }
@@ -133,7 +250,9 @@ const getAllCity = async (req, res, next) => {
   try {
     const allCities = await City.find();
     if (allCities.length > 0) {
-      return res.status(200).json(allCities);
+      return res.status(200).json({
+        dataUpdate: await City.find().populate("neighborhoods users"),
+      });
     } else {
       return res.status(404).json("Cities not found");
     }
@@ -150,4 +269,6 @@ module.exports = {
   deleteCity,
   getByIdCity,
   getAllCity,
+  toggleNeighborhoodInCity,
+  toggleUserInCity,
 };
