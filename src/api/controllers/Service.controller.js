@@ -4,6 +4,7 @@ const User = require("../models/User.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Message = require("../models/Message.model");
 const Rating = require("../models/Rating.model");
+const City = require("../models/City.model");
 
 //-------------- CREATE
 const createServices = async (req, res, next) => {
@@ -266,7 +267,6 @@ const toggleNeighborhoods = async (req, res, next) => {
               await Service.findByIdAndUpdate(id, {
                 $pull: { neighborhoods: neighborhood },
               });
-
               try {
                 await Neighborhood.findByIdAndUpdate(neighborhood, {
                   $pull: { services: id },
@@ -313,6 +313,55 @@ const toggleNeighborhoods = async (req, res, next) => {
             dataUpdate: await Service.findById(id).populate("neighborhoods"),
           });
         });
+    } else {
+      return res.status(404).json("this service doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
+const toggleCity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { city } = req.body;
+    const serviceById = await Service.findById(id);
+
+    if (serviceById) {
+      if (serviceById.city.includes(city)) {
+        try {
+          await Service.findByIdAndUpdate(id, {
+            $pull: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Service.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update service",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await Service.findByIdAndUpdate(id, {
+            $push: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Service.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update service",
+            message: error.message,
+          }) && next(error);
+        }
+      }
     } else {
       return res.status(404).json("this service doesn't exist");
     }
@@ -569,4 +618,5 @@ module.exports = {
   getByNameServices,
   updateServices,
   calculateStarsAverage,
+  toggleCity,
 };
