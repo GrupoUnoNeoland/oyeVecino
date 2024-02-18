@@ -11,7 +11,7 @@ const RequestSchema = new mongoose.Schema(
       enum: ["rejected", "accepted", "waiting"],
       default: "waiting",
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    user: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
