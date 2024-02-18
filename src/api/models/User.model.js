@@ -44,7 +44,7 @@ const UserSchema = new mongoose.Schema(
       type: Number,
     },
     request: {
-      type: { type: mongoose.Schema.Types.ObjectId, ref: "Request" }
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }]
     },
     adressChecked: {
       type: Boolean,
