@@ -28,9 +28,7 @@ const UserSchema = new mongoose.Schema(
       validate: [validator.isStrongPassword], //minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1
     },
     city: {
-      type: String,
-      required: true,
-      trim: true,
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }]
     },
     adress: {
       type: String,
