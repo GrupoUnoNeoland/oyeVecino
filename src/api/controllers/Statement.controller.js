@@ -15,8 +15,8 @@ const createStatement = async (req, res, next) => {
     const StatementExist = await Statement.findOne({ title: req.body.title });
     if (!StatementExist) {
       const newStatement = new Statement({ ...req.body, images: catchImgs });
-      newStatement.users[0] = req.user._id;
-      newStatement.neighborhoods[0] = req.user.neighborhoods[0];
+      newStatement.owner[0] = req.user._id;
+
       try {
         const StatementSave = await newStatement.save();
 
@@ -91,12 +91,39 @@ const deleteStatement = async (req, res, next) => {
   }
 };
 
+//--------------- GET ALL OF LIKE ---------------------------------------------------------------------------------
+const getAllStatementLike = async (req, res, next) => {
+  try {
+    const allStatements = await Statement.find();
+
+    if (allStatements.length > 0) {
+      // const allStatementLikes = allStatments.map((statement) => {
+      //   console.log(statement);
+      // const likes = statement?.likes || 0;
+      // const obj = { ...statement };
+      // obj.stars = stars;
+      // return obj;
+      // });
+
+      allStatements.sort((a, b) => b.likes.length - a.likes.length);
+      return res.status(200).json({ statements: allStatements });
+    } else {
+      return res.status(404).json("Statement not found");
+    }
+  } catch (error) {
+    return res.status(404).json({
+      error: "error al buscar - lanzado en el catch",
+      message: error.message,
+    });
+  }
+};
+
 //!--------------------getAllStatement---------------------
 
 const getAllStatement = async (req, res, next) => {
   try {
     const getAllStatement = await Statement.find().populate(
-      "comments likes users neighborhoods"
+      "comments likes owner neighborhoods"
     );
     if (getAllStatement.length > 0) {
       return res.status(200).json(getAllStatement);
@@ -117,7 +144,7 @@ const getByIdStatement = async (req, res, next) => {
   try {
     const { id } = req.params;
     const statementById = await Statement.findById(id).populate(
-      "comments likes users neighborhoods"
+      "comments likes owner neighborhoods"
     );
     if (statementById) {
       return res.status(200).json(statementById);
@@ -205,7 +232,7 @@ const toggleUser = async (req, res, next) => {
 
       Promise.all(
         arrayIduser.map(async (user, index) => {
-          if (statementById.users.includes(user)) {
+          if (statementById.owner.includes(user)) {
             try {
               await Statement.findByIdAndUpdate(id, {
                 $pull: { users: user },
@@ -254,7 +281,7 @@ const toggleUser = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Statement.findById(id).populate("users"),
+            dataUpdate: await Statement.findById(id).populate("owner"),
           });
         });
     } else {
@@ -505,6 +532,55 @@ const toggleLike = async (req, res, next) => {
   }
 };
 
+const toggleCity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { city } = req.body;
+    const statementById = await Statement.findById(id);
+
+    if (statementById) {
+      if (statementById.city.includes(city)) {
+        try {
+          await Statement.findByIdAndUpdate(id, {
+            $pull: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Statement.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update statement",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await Statement.findByIdAndUpdate(id, {
+            $push: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Statement.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update statement",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this statement doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createStatement,
   deleteStatement,
@@ -515,4 +591,6 @@ module.exports = {
   toggleComment,
   toggleLike,
   updateStatement,
+  getAllStatementLike,
+  toggleCity,
 };
