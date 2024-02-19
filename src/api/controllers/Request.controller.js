@@ -1,10 +1,11 @@
+const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+
 const User = require("../models/User.model");
 const Request = require("../models/Request.model");
-const Neighborhood = require("../models/Neighborhood.model");
+
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const { request } = require("express");
-const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+
 dotenv.config();
 
 //--------- create
@@ -15,6 +16,7 @@ const createRequest = async (req, res, next) => {
     await Request.syncIndexes();
 
     const requestExist = await Request.findOne({ user: req.user._id });
+    console.log("requestExist", requestExist)
 
     if (!requestExist) {
       const newRequest = new Request({
@@ -29,8 +31,6 @@ const createRequest = async (req, res, next) => {
         if (RequestSave) {
           const emailEnv = process.env.EMAIL;
           const password = process.env.PASSWORD;
-          const requestDb = await Request.findById(RequestSave._id);
-          console.log("requestDb", requestDb);
 
           const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -67,7 +67,7 @@ const createRequest = async (req, res, next) => {
         }
       } catch (error) {
         deleteImgCloudinary(catchDocument);
-        return res.status(404).json(error.message);
+        return res.status(404).json("Request not saved");
       }
     } else {
       deleteImgCloudinary(catchDocument);
