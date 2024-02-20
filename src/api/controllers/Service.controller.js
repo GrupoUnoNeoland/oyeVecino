@@ -16,7 +16,6 @@ const createServices = async (req, res, next) => {
     const ServiceExist = await Service.findOne({ title: req.body.title });
     if (!ServiceExist) {
       const newService = new Service({ ...req.body, images: catchImgs });
-      newService.provider[0] = req.user._id;
 
       try {
         const ServiceSave = await newService.save();
@@ -115,7 +114,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
           if (serviceById.provider.includes(user)) {
             try {
               await Service.findByIdAndUpdate(id, {
-                $pull: { users: user },
+                $pull: { provider: user },
               });
 
               try {
@@ -137,7 +136,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
           } else {
             try {
               await Service.findByIdAndUpdate(id, {
-                $push: { users: user },
+                $push: { provider: user },
               });
               try {
                 await User.findByIdAndUpdate(user, {
@@ -491,11 +490,11 @@ const updateServices = async (req, res, next) => {
       if (req.files.image) {
         updateService.images === catchImg
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
