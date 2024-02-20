@@ -452,8 +452,8 @@ const toggleComments = async (req, res, next) => {
 
 //-------------- UPDATE
 const updateServices = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
-
+  let catchImg = req.files.map((file) => file.path);
+  console.log(req.files);
   const { id } = req.params;
 
   try {
@@ -461,12 +461,12 @@ const updateServices = async (req, res, next) => {
 
     const patchService = new Service(req.body);
 
-    req.files?.image && (patchService.images = catchImg);
+    req.files && (patchService.images = catchImg);
 
     try {
       const serviceToUpdate = await Service.findById(id);
 
-      req.files?.image &&
+      req.files &&
         serviceToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchService._id = serviceToUpdate._id;
       await Service.findByIdAndUpdate(id, patchService);
@@ -476,7 +476,8 @@ const updateServices = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateService[item] === req.body[item]) {
+        console.log(updateService[item], req.body[item]);
+        if (serviceToUpdate[item] !== req.body[item]) {
           testUpdate.push({
             [item]: true,
           });
@@ -487,14 +488,15 @@ const updateServices = async (req, res, next) => {
         }
       });
 
-      if (req.files.image) {
-        updateService.images === catchImg
+      if (req.files) {
+        console.log(updateService.images, catchImg);
+        catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -502,12 +504,11 @@ const updateServices = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image &&
-        catchImg.forEach((image) => deleteImgCloudinary(image));
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
