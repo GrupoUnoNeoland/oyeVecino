@@ -123,7 +123,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users offered",
+                  error: "error update provider offered",
                   message: error.message,
                 }) && next(error);
               }
@@ -144,7 +144,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -160,7 +160,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -186,10 +186,10 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
       const arrayIdUsers = users.split(",");
       Promise.all(
         arrayIdUsers.map(async (user) => {
-          if (serviceById.users.includes(user)) {
+          if (serviceById.provider.includes(user)) {
             try {
               await Service.findByIdAndUpdate(id, {
-                $pull: { users: user },
+                $pull: { provider: user },
               });
 
               try {
@@ -198,7 +198,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users demanded",
+                  error: "error update provider demanded",
                   message: error.message,
                 }) && next(error);
               }
@@ -211,7 +211,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
           } else {
             try {
               await Service.findByIdAndUpdate(id, {
-                $push: { users: user },
+                $push: { provider: user },
               });
               try {
                 await User.findByIdAndUpdate(user, {
@@ -219,7 +219,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -235,7 +235,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -518,7 +518,7 @@ const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceById = await Service.findById(id).populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods"
     );
     if (serviceById) {
       return res.status(200).json(serviceById);
@@ -533,7 +533,7 @@ const getByIdService = async (req, res, next) => {
 const getAllServices = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods"
     );
     if (allServices.length > 0) {
       return res.status(200).json(allServices);
@@ -552,7 +552,7 @@ const getAllServices = async (req, res, next) => {
 const getAllServicesStar = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "starReview users comments neighborhoods"
+      "starReview provider comments neighborhoods"
     );
 
     if (allServices.length > 0) {
@@ -622,11 +622,12 @@ module.exports = {
   toggleUsersServiceDemanded,
   toggleNeighborhoods,
   toggleComments,
+  toggleCity,
   getByIdService,
   getAllServices,
   getByNameServices,
   updateServices,
   calculateStarsAverage,
-  toggleCity,
+
   getAllServicesStar,
 };
