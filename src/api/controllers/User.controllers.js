@@ -2,11 +2,11 @@ const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 
 const User = require("../models/User.model");
 const Neighborhood = require("../models/Neighborhood.model");
-const Message = require("../models/Message.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
 const Event = require("../models/Event.model");
-const Chat = require("../models/Chat.model");
+const City = require("../models/City.model");
+const Request = require("../models/Request.model");
 
 const randomCode = require("../../utils/randomCode");
 const { generateToken } = require("../../utils/token");
@@ -16,8 +16,6 @@ const enumOk = require("../../utils/enumOk");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
-const Rating = require("../models/Rating.model");
-const City = require("../models/City.model");
 
 dotenv.config();
 
@@ -1155,6 +1153,70 @@ const toggleFavStatements = async (req, res, next) => {
   }
 };
 
+const toggleRequestInUser = async (req, res, next) => {
+  try {
+    const { id: userId } = req.params;
+    const { requestId: id } = req.body;
+    console.log();
+
+    const requestById = await Request.findById(id);
+    console.log(requestById);
+
+    if (requestById) {
+      if (requestById.user.includes(userId)) {
+        try {
+          await User.findByIdAndUpdate(userId, { $pull: { request: id } });
+          try {
+            await Request.findByIdAndUpdate(id, { $pull: { user: userId } });
+            return res.status(200).json({
+              dataUpdate: await Request.findById(id),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update user key in request",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update request key in user",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await User.findByIdAndUpdate(userId, { $push: { request: id } });
+          try {
+            await Request.findByIdAndUpdate(id, { $push: { user: userId } });
+            return res.status(200).json({
+              dataUpdate: await Request.findById(id),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update user key in request",
+              message: error.message,
+            }) && next(error);
+          }
+        } catch (error) {
+          res.status(404).json({
+            error: "error update request key in user",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this request doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   register,
   sendCode,
@@ -1176,5 +1238,6 @@ module.exports = {
   toggleFavEvents,
   toggleFavStatements,
   registerAdmin,
-  toggleCity
+  toggleCity,
+  toggleRequestInUser
 };
