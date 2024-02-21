@@ -77,7 +77,15 @@ const deleteServices = async (req, res, next) => {
                 { recipientService: id },
                 { $pull: { recipientService: id } }
               );
-              return res.status(200).json("service deleted ok");
+              try {
+                await Rating.updateMany(
+                  { service: id },
+                  { $pull: { service: id } }
+                );
+                return res.status(200).json("deleted ok");
+              } catch (error) {
+                return res.status(404).json("Service not deleted from rating");
+              }
             } catch (error) {
               return res
                 .status(404)
@@ -374,81 +382,81 @@ const toggleCity = async (req, res, next) => {
   }
 };
 
-//-------------- TOGGLE COMMENTS
-const toggleComments = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-    const serviceById = await Service.findById(id);
+// //-------------- TOGGLE COMMENTS
+// const toggleComments = async (req, res, next) => {
+// try {
+//   const { id } = req.params;
+//   const { comments } = req.body;
+//   const serviceById = await Service.findById(id);
 
-    if (serviceById) {
-      const arrayIdComments = comments.split(",");
-      Promise.all(
-        arrayIdComments.map(async (comment) => {
-          if (serviceById.comments.includes(comment)) {
-            try {
-              await Service.findByIdAndUpdate(id, {
-                $pull: { comments: comment },
-              });
+//   if (serviceById) {
+//     const arrayIdComments = comments.split(",");
+//     Promise.all(
+//       arrayIdComments.map(async (comment) => {
+//         if (serviceById.comments.includes(comment)) {
+//           try {
+//             await Service.findByIdAndUpdate(id, {
+//               $pull: { comments: comment },
+//             });
 
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $pull: { services: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update comment",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update service",
-                message: error.message,
-              }) && next(error);
-            }
-          } else {
-            try {
-              await Service.findByIdAndUpdate(id, {
-                $push: { comments: comment },
-              });
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $push: { services: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update comments",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update service",
-                message: error.message,
-              }) && next(error);
-            }
-          }
-        })
-      )
-        .catch((error) => res.status(404).json(error.message))
-        .then(async () => {
-          return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("comments"),
-          });
-        });
-    } else {
-      return res.status(404).json("this service doesn't exist");
-    }
-  } catch (error) {
-    return (
-      res.status(404).json({
-        error: "error catch",
-        message: error.message,
-      }) && next(error)
-    );
-  }
-};
+//             try {
+//               await Message.findByIdAndUpdate(comment, {
+//                 $pull: { services: id },
+//               });
+//             } catch (error) {
+//               res.status(404).json({
+//                 error: "error update comment",
+//                 message: error.message,
+//               }) && next(error);
+//             }
+//           } catch (error) {
+//             res.status(404).json({
+//               error: "error update service",
+//               message: error.message,
+//             }) && next(error);
+//           }
+//         } else {
+//           try {
+//             await Service.findByIdAndUpdate(id, {
+//               $push: { comments: comment },
+//             });
+//             try {
+//               await Message.findByIdAndUpdate(comment, {
+//                 $push: { services: id },
+//               });
+//             } catch (error) {
+//               res.status(404).json({
+//                 error: "error update comments",
+//                 message: error.message,
+//               }) && next(error);
+//             }
+//           } catch (error) {
+//             res.status(404).json({
+//               error: "error update service",
+//               message: error.message,
+//             }) && next(error);
+//           }
+//         }
+//       })
+//     )
+//       .catch((error) => res.status(404).json(error.message))
+//       .then(async () => {
+//         return res.status(200).json({
+//           dataUpdate: await Service.findById(id).populate("comments"),
+//         });
+//       });
+//   } else {
+//     return res.status(404).json("this service doesn't exist");
+//   }
+// } catch (error) {
+//   return (
+//     res.status(404).json({
+//       error: "error catch",
+//       message: error.message,
+//     }) && next(error)
+//   );
+// }
+// };
 
 //-------------- UPDATE
 const updateServices = async (req, res, next) => {
@@ -621,7 +629,6 @@ module.exports = {
   toggleUsersServiceOffered,
   toggleUsersServiceDemanded,
   toggleNeighborhoods,
-  toggleComments,
   toggleCity,
   getByIdService,
   getAllServices,
