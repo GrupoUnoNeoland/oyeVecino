@@ -42,19 +42,22 @@ const createServices = async (req, res, next) => {
 };
 //-------------- DELETE
 const deleteServices = async (req, res, next) => {
+  const { id } = req.params;
+
   try {
     const { id } = req.params;
     const serviceDelete = await Service.findById(id);
-    const serviceDeleteImgs = serviceDelete.images;
+    const serviceDeleteImgs = serviceDelete?.images;
 
     await Service.findByIdAndDelete(id);
 
     if (await Service.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
-      serviceDeleteImgs.forEach((image) => {
-        deleteImgCloudinary(image);
-      });
+      serviceDeleteImgs &&
+        serviceDeleteImgs.forEach((image) => {
+          deleteImgCloudinary(image);
+        });
 
       try {
         await User.updateMany(
@@ -67,40 +70,44 @@ const deleteServices = async (req, res, next) => {
             { $pull: { servicesDemanded: id } }
           );
           try {
-            await Neighborhood.updateMany(
-              { services: id },
-              { $pull: { services: id } }
-            );
+            const { _id } = await Message.find({ recipientService: id });
+            console.log("🚀 ~ deleteServices ~ messages:", messages);
 
+            await User.updateMany(
+              { servicesComments: _id },
+              { $pull: { servicesComments: _id } }
+            );
             try {
-              await Message.updateMany(
-                { recipientService: id },
-                { $pull: { recipientService: id } }
+              await Neighborhood.updateMany(
+                { services: id },
+                { $pull: { services: id } }
               );
               try {
-                await Rating.updateMany(
-                  { service: id },
-                  { $pull: { service: id } }
-                );
-                return res.status(200).json("deleted ok");
+                await Rating.deleteMany({ service: id });
+                try {
+                  await Message.deleteMany({ recipientService: id });
+                  return res.status(200).json("deleted ok");
+                } catch (error) {
+                  return res.status(404).json("service message not deleted");
+                }
               } catch (error) {
-                return res.status(404).json("Service not deleted from rating");
+                return res.status(404).json("Service rating not deleted");
               }
             } catch (error) {
               return res
                 .status(404)
-                .json("recipientService not deleted from message");
+                .json("Service  not deleted from neighborhood");
             }
           } catch (error) {
             return res
               .status(404)
-              .json("service not deleted from neighborhood");
+              .json("servicesComments not deleted from user");
           }
         } catch (error) {
-          return res.status(404).json("serviceDemanded not deleted froms user");
+          return res.status(404).json("service demanded not deleted from user");
         }
       } catch (error) {
-        return res.status(404).json("servicesOffered not deleted from user");
+        return res.status(404).json("service offered not deleted from user");
       }
     }
   } catch (error) {
@@ -526,7 +533,7 @@ const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceById = await Service.findById(id).populate(
-      "provider comments neighborhoods"
+      "provider comments neighborhoods starReview"
     );
     if (serviceById) {
       return res.status(200).json(serviceById);

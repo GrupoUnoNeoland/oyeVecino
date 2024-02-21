@@ -167,7 +167,7 @@ const getByIdStatement = async (req, res, next) => {
 //!--------------------UPDATE STATEMENT----------------------------
 
 const updateStatement = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
+  let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
 
@@ -176,12 +176,15 @@ const updateStatement = async (req, res, next) => {
 
     const patchStatement = new Statement(req.body);
 
-    req.files?.image && (patchStatement.images = catchImg);
+    req.files.length > 0 && (patchStatement.images = catchImg);
 
     try {
       const statementToUpdate = await Statement.findById(id);
+      req.files.length > 0
+        ? (patchStatement.images = catchImg)
+        : (patchStatement.images = statementToUpdate.images);
 
-      req.files?.image &&
+      req.files.length > 0 &&
         statementToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchStatement._id = statementToUpdate._id;
       await Statement.findByIdAndUpdate(id, patchStatement);
@@ -191,19 +194,19 @@ const updateStatement = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateStatement[item] === req.body[item]) {
+        if (statementToUpdate[item] === req.body[item]) {
           testUpdate.push({
-            [item]: true,
+            [item]: false,
           });
         } else {
           testUpdate.push({
-            [item]: false,
+            [item]: true,
           });
         }
       });
 
-      if (req.files.image) {
-        updateStatement.images === catchImg
+      if (req.files) {
+        catchImg.length > 0
           ? testUpdate.push({
             image: true,
           })
@@ -217,12 +220,11 @@ const updateStatement = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image &&
-        catchImg.forEach((image) => deleteImgCloudinary(image));
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
