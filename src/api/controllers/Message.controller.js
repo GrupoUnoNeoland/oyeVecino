@@ -220,7 +220,7 @@ const createMessage = async (req, res, next) => {
       }
     } else if (type == "event") {
       const newMessage = new Message(req.body);
-      newMessage.recipientEvent = id;
+      newMessage.recipientEvent = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user;
       try {
@@ -587,10 +587,17 @@ const getAllMessages = async (req, res, next) => {
   }
 };
 
+//?-------------------------------------------
+//---------toggle para borrar servicesComments de User:
+//?--------------------------------------------
+
+const toggleUsers = async (req, res, next) => {};
+
 module.exports = {
   createMessage,
   updateMessage,
   deleteMessege,
   getAllMessages,
   getByIdMessage,
+  toggleUsers,
 };
