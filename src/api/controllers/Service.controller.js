@@ -123,7 +123,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users offered",
+                  error: "error update provider offered",
                   message: error.message,
                 }) && next(error);
               }
@@ -144,7 +144,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -160,7 +160,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -186,10 +186,10 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
       const arrayIdUsers = users.split(",");
       Promise.all(
         arrayIdUsers.map(async (user) => {
-          if (serviceById.users.includes(user)) {
+          if (serviceById.provider.includes(user)) {
             try {
               await Service.findByIdAndUpdate(id, {
-                $pull: { users: user },
+                $pull: { provider: user },
               });
 
               try {
@@ -198,7 +198,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users demanded",
+                  error: "error update provider demanded",
                   message: error.message,
                 }) && next(error);
               }
@@ -211,7 +211,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
           } else {
             try {
               await Service.findByIdAndUpdate(id, {
-                $push: { users: user },
+                $push: { provider: user },
               });
               try {
                 await User.findByIdAndUpdate(user, {
@@ -219,7 +219,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -235,7 +235,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -452,8 +452,8 @@ const toggleComments = async (req, res, next) => {
 
 //-------------- UPDATE
 const updateServices = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
-
+  let catchImg = req.files.map((file) => file.path);
+  console.log(req.files);
   const { id } = req.params;
 
   try {
@@ -461,12 +461,12 @@ const updateServices = async (req, res, next) => {
 
     const patchService = new Service(req.body);
 
-    req.files?.image && (patchService.images = catchImg);
+    req.files && (patchService.images = catchImg);
 
     try {
       const serviceToUpdate = await Service.findById(id);
 
-      req.files?.image &&
+      req.files &&
         serviceToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchService._id = serviceToUpdate._id;
       await Service.findByIdAndUpdate(id, patchService);
@@ -476,7 +476,8 @@ const updateServices = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateService[item] === req.body[item]) {
+        console.log(updateService[item], req.body[item]);
+        if (serviceToUpdate[item] !== req.body[item]) {
           testUpdate.push({
             [item]: true,
           });
@@ -487,14 +488,15 @@ const updateServices = async (req, res, next) => {
         }
       });
 
-      if (req.files.image) {
-        updateService.images === catchImg
+      if (req.files) {
+        console.log(updateService.images, catchImg);
+        catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -502,12 +504,11 @@ const updateServices = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image &&
-        catchImg.forEach((image) => deleteImgCloudinary(image));
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -517,7 +518,7 @@ const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceById = await Service.findById(id).populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods"
     );
     if (serviceById) {
       return res.status(200).json(serviceById);
@@ -532,7 +533,7 @@ const getByIdService = async (req, res, next) => {
 const getAllServices = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods"
     );
     if (allServices.length > 0) {
       return res.status(200).json(allServices);
@@ -551,7 +552,7 @@ const getAllServices = async (req, res, next) => {
 const getAllServicesStar = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "starReview users comments neighborhoods"
+      "starReview provider comments neighborhoods"
     );
 
     if (allServices.length > 0) {
@@ -621,11 +622,12 @@ module.exports = {
   toggleUsersServiceDemanded,
   toggleNeighborhoods,
   toggleComments,
+  toggleCity,
   getByIdService,
   getAllServices,
   getByNameServices,
   updateServices,
   calculateStarsAverage,
-  toggleCity,
+
   getAllServicesStar,
 };

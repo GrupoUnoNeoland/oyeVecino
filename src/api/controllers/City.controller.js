@@ -195,49 +195,49 @@ const deleteCity = async (req, res, next) => {
     const cityDelete = await City.findById(id);
     const cityImages = cityDelete?.images;
 
-    // if (cityDelete) {
-    try {
-      await City.findByIdAndDelete(id);
+    if (cityDelete) {
       try {
-        await Neighborhood.deleteMany({ city: id });
+        await City.findByIdAndDelete(id);
         try {
-          await User.deleteMany({ city: id });
+          await Neighborhood.deleteMany({ city: id });
           try {
-            await Service.deleteMany({ city: id });
+            await User.deleteMany({ city: id });
             try {
-              await Statement.deleteMany({ city: id });
-              console.log(await Statement.findOne({ city: id }));
+              await Service.deleteMany({ city: id });
               try {
-                await Event.deleteMany({ city: id });
-                console.log(await Event.findOne({ city: id }));
+                await Statement.deleteMany({ city: id });
+                console.log(await Statement.findOne({ city: id }));
                 try {
-                  await Request.deleteMany({ city: id });
-                  console.log(await Request.findOne({ city: id }));
-                  return res.status(200).json("all requests deleted");
+                  await Event.deleteMany({ city: id });
+                  console.log(await Event.findOne({ city: id }));
+                  try {
+                    await Request.deleteMany({ city: id });
+                    console.log(await Request.findOne({ city: id }));
+                    return res.status(200).json("all requests deleted");
+                  } catch (error) {
+                    return res.status(404).json("requests not deleted");
+                  }
                 } catch (error) {
-                  return res.status(404).json("requests not deleted");
+                  return res.status(404).json("events not deleted");
                 }
               } catch (error) {
-                return res.status(404).json("events not deleted");
+                return res.status(404).json("statements not deleted");
               }
             } catch (error) {
-              return res.status(404).json("statements not deleted");
+              return res.status(404).json("services not deleted");
             }
           } catch (error) {
-            return res.status(404).json("services not deleted");
+            return res.status(404).json("users not deleted");
           }
         } catch (error) {
-          return res.status(404).json("users not deleted");
+          return res.status(404).json("neighborhoods not deleted");
         }
       } catch (error) {
-        return res.status(404).json("neighborhoods not deleted");
+        return res.status(404).json("City not deleted");
       }
-    } catch (error) {
-      return res.status(404).json("City not deleted");
+    } else {
+      return res.status(404).json("City not found");
     }
-    // } else {
-    //   return res.status(404).json("City not found");
-    // }
   } catch (error) {
     return res.status(404).json(error.message);
   }

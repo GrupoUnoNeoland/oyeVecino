@@ -31,12 +31,12 @@ const createStatement = async (req, res, next) => {
         return res.status(404).json(error.message);
       }
     } else {
-      catchImgs.forEach((image) => deleteImgCloudinary(image));
+      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
 
       return res.status(409).json("this Statement already exist");
     }
   } catch (error) {
-    catchImgs.forEach((image) => deleteImgCloudinary(image));
+    catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -44,47 +44,55 @@ const createStatement = async (req, res, next) => {
 //!-----------------------DELETE STATEMNT---------------------------------------
 
 const deleteStatement = async (req, res, next) => {
+  const userLogged = req.user._id
+  const isAdmin = req.user.rol === "admin"
+
   try {
     const { id } = req.params;
     const statementDelete = await Statement.findById(id);
-    const statementDeleteImgs = statementDelete.images;
+    const statementDeleteImgs = statementDelete?.images;
 
-    await Statement.findByIdAndDelete(id);
+    if (statementDelete) {
+      const isUserLoggedTheStatementOwner = userLogged._id.toString() == statementDelete.users[0]._id.toString()
+      console.log(userLogged._id.toString(), statementDelete.users[0]._id.toString())
+      if (isUserLoggedTheStatementOwner || isAdmin) {
+        await Statement.findByIdAndDelete(id);
+        statementDeleteImgs && statementDeleteImgs.forEach((image) => {
+          deleteImgCloudinary(image);
+        });
 
-    if (await Statement.findById(id)) {
-      return res.status(404).json("not deleted");
-    } else {
-      statementDeleteImgs.forEach((image) => {
-        deleteImgCloudinary(image);
-      });
-
-      try {
-        await User.updateMany(
-          { statementsFav: id },
-          { $pull: { statementsFav: id } }
-        );
         try {
           await User.updateMany(
-            { statements: id },
-            { $pull: { statements: id } }
+            { statementsFav: id },
+            { $pull: { statementsFav: id } }
           );
           try {
-            await Neighborhood.updateMany(
+            await User.updateMany(
               { statements: id },
               { $pull: { statements: id } }
             );
-            return res.status(200).json("ok deleted");
+            try {
+              await Neighborhood.updateMany(
+                { statements: id },
+                { $pull: { statements: id } }
+              );
+              return res.status(200).json("ok deleted");
+            } catch (error) {
+              return res
+                .status(404)
+                .json("statements user not deleted from neighborhood");
+            }
           } catch (error) {
-            return res
-              .status(404)
-              .json("statements user not deleted from neighborhood");
+            return res.status(404).json("statements  not deleted");
           }
         } catch (error) {
-          return res.status(404).json("statements  not deleted");
+          return res.status(404).json("statementFav not deleted");
         }
-      } catch (error) {
-        return res.status(404).json("statementFav not deleted");
+      } else {
+        return res.status(404).json("this event can not be deleted by this user")
       }
+    } else {
+      return res.status(404).json("this statement do not exist")
     }
   } catch (error) {
     return res.status(404).json(error.message);
@@ -159,7 +167,7 @@ const getByIdStatement = async (req, res, next) => {
 //!--------------------UPDATE STATEMENT----------------------------
 
 const updateStatement = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
+  let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
 
@@ -168,12 +176,15 @@ const updateStatement = async (req, res, next) => {
 
     const patchStatement = new Statement(req.body);
 
-    req.files?.image && (patchStatement.images = catchImg);
+    req.files.length > 0 && (patchStatement.images = catchImg);
 
     try {
       const statementToUpdate = await Statement.findById(id);
+      req.files.length > 0
+        ? (patchStatement.images = catchImg)
+        : (patchStatement.images = statementToUpdate.images);
 
-      req.files?.image &&
+      req.files.length > 0 &&
         statementToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchStatement._id = statementToUpdate._id;
       await Statement.findByIdAndUpdate(id, patchStatement);
@@ -183,25 +194,25 @@ const updateStatement = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateStatement[item] === req.body[item]) {
+        if (statementToUpdate[item] === req.body[item]) {
           testUpdate.push({
-            [item]: true,
+            [item]: false,
           });
         } else {
           testUpdate.push({
-            [item]: false,
+            [item]: true,
           });
         }
       });
 
-      if (req.files.image) {
-        updateStatement.images === catchImg
+      if (req.files) {
+        catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -209,12 +220,11 @@ const updateStatement = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image &&
-        catchImg.forEach((image) => deleteImgCloudinary(image));
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -235,7 +245,7 @@ const toggleUser = async (req, res, next) => {
           if (statementById.owner.includes(user)) {
             try {
               await Statement.findByIdAndUpdate(id, {
-                $pull: { users: user },
+                $pull: { owner: user },
               });
 
               try {
@@ -257,7 +267,7 @@ const toggleUser = async (req, res, next) => {
           } else {
             try {
               await Statement.findByIdAndUpdate(id, {
-                $push: { users: user },
+                $push: { owner: user },
               });
               try {
                 await User.findByIdAndUpdate(user, {
