@@ -264,7 +264,7 @@ const createMessage = async (req, res, next) => {
       }
     } else if (type == "statement") {
       const newMessage = new Message(req.body);
-      newMessage.recipientStatement = id;
+      newMessage.recipientStatement = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user;
       try {
@@ -281,10 +281,22 @@ const createMessage = async (req, res, next) => {
                 comments: savedMessage._id,
               },
             });
-            return res.status(200).json({
-              event: await Event.findById(id),
-              comment: savedMessage,
-            });
+            try {
+              await Service.findByIdAndUpdate(id, {
+                $push: {
+                  comments: savedMessage._id,
+                },
+              });
+              return res.status(200).json({
+                service: await Service.findById(id),
+                comment: savedMessage,
+              });
+            } catch (error) {
+              return res.status(404).json({
+                error: "Comments key was not updated",
+                idMessage: newMessage._id,
+              });
+            }
           } catch (error) {
             return res.status(404).json({
               error: "Comments key was not updated",
@@ -308,7 +320,7 @@ const createMessage = async (req, res, next) => {
       }
     } else if (type == "service") {
       const newMessage = new Message(req.body);
-      newMessage.recipientService = id;
+      newMessage.recipientService = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user._id;
       console.log("🚀 ~ createMessage ~ newMessage:", newMessage);
