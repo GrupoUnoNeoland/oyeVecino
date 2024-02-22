@@ -1,6 +1,7 @@
 //!-----CREATE STATEMENT-----
 
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Like = require("../models/Like.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Statement = require("../models/Statement.model");
@@ -15,7 +16,6 @@ const createStatement = async (req, res, next) => {
     const StatementExist = await Statement.findOne({ title: req.body.title });
     if (!StatementExist) {
       const newStatement = new Statement({ ...req.body, images: catchImgs });
-      newStatement.owner[0] = req.user._id;
 
       try {
         const StatementSave = await newStatement.save();
@@ -44,61 +44,79 @@ const createStatement = async (req, res, next) => {
 //!-----------------------DELETE STATEMNT---------------------------------------
 
 const deleteStatement = async (req, res, next) => {
-  const userLogged = req.user._id
-  const isAdmin = req.user.rol === "admin"
+  const { id } = req.params;
 
   try {
     const { id } = req.params;
     const statementDelete = await Statement.findById(id);
     const statementDeleteImgs = statementDelete?.images;
 
-    if (statementDelete) {
-      const isUserLoggedTheStatementOwner = userLogged._id.toString() == statementDelete.users[0]._id.toString()
-      console.log(userLogged._id.toString(), statementDelete.users[0]._id.toString())
-      if (isUserLoggedTheStatementOwner || isAdmin) {
-        await Statement.findByIdAndDelete(id);
-        statementDeleteImgs && statementDeleteImgs.forEach((image) => {
+    await Statement.findByIdAndDelete(id);
+
+    if (await Statement.findById(id)) {
+      return res.status(404).json("not deleted");
+    } else {
+      statementDeleteImgs &&
+        statementDeleteImgs.forEach((image) => {
           deleteImgCloudinary(image);
         });
 
+      try {
+        await User.updateMany(
+          { statements: id },
+          { $pull: { statements: id } }
+        );
+
         try {
+          const message = await Message.find({ recipientStatement: id });
+          const messageId = message[0]._id.toString();
           await User.updateMany(
-            { statementsFav: id },
-            { $pull: { statementsFav: id } }
+            { statementsComments: messageId },
+            { $pull: { statementsComments: messageId } }
           );
           try {
-            await User.updateMany(
+            await Neighborhood.updateMany(
               { statements: id },
               { $pull: { statements: id } }
             );
             try {
-              await Neighborhood.updateMany(
-                { statements: id },
-                { $pull: { statements: id } }
-              );
-              return res.status(200).json("ok deleted");
+              await Like.deleteMany({ statement: id });
+              try {
+                await Message.deleteMany({ recipientStatement: id });
+
+                try {
+                  await User.updateMany(
+                    { statementsFav: id },
+                    { $pull: { statementsFav: id } }
+                  );
+                  return res.status(200).json("deleted ok");
+                } catch (error) {
+                  return res.status(404).json("statementsFav not deleted");
+                }
+              } catch (error) {
+                return res.status(404).json("statement message not deleted");
+              }
             } catch (error) {
-              return res
-                .status(404)
-                .json("statements user not deleted from neighborhood");
+              return res.status(404).json("statement rating not deleted");
             }
           } catch (error) {
-            return res.status(404).json("statements  not deleted");
+            return res
+              .status(404)
+              .json("statement  not deleted from neighborhood");
           }
         } catch (error) {
-          return res.status(404).json("statementFav not deleted");
+          return res
+            .status(404)
+            .json("statementsComments not deleted from user");
         }
-      } else {
-        return res.status(404).json("this event can not be deleted by this user")
+      } catch (error) {
+        return res.status(404).json("statement offered not deleted from user");
       }
-    } else {
-      return res.status(404).json("this statement do not exist")
     }
   } catch (error) {
     return res.status(404).json(error.message);
   }
 };
-
 //--------------- GET ALL OF LIKE ---------------------------------------------------------------------------------
 const getAllStatementLike = async (req, res, next) => {
   try {
@@ -167,9 +185,10 @@ const getByIdStatement = async (req, res, next) => {
 //!--------------------UPDATE STATEMENT----------------------------
 
 const updateStatement = async (req, res, next) => {
-  const userLogged = req.user._id
-  const isAdmin = req.user.rol === "admin"
-  const isUserLoggedTheStatementOwner = userLogged._id.toString() == statementDelete.users[0]._id.toString()
+  const userLogged = req.user._id;
+  const isAdmin = req.user.rol === "admin";
+  const isUserLoggedTheStatementOwner =
+    userLogged._id.toString() == statementDelete.users[0]._id.toString();
   let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
@@ -188,7 +207,9 @@ const updateStatement = async (req, res, next) => {
           : (patchStatement.images = statementToUpdate.images);
 
         req.files.length > 0 &&
-          statementToUpdate.images.forEach((image) => deleteImgCloudinary(image));
+          statementToUpdate.images.forEach((image) =>
+            deleteImgCloudinary(image)
+          );
         patchStatement._id = statementToUpdate._id;
         await Statement.findByIdAndUpdate(id, patchStatement);
 
@@ -211,11 +232,11 @@ const updateStatement = async (req, res, next) => {
         if (req.files) {
           catchImg.length > 0
             ? testUpdate.push({
-              image: true,
-            })
+                image: true,
+              })
             : testUpdate.push({
-              image: false,
-            });
+                image: false,
+              });
         }
 
         return res.status(200).json({
@@ -231,7 +252,7 @@ const updateStatement = async (req, res, next) => {
       return next(error);
     }
   } else {
-    return res.status(404).json("this event can not be updated by this user")
+    return res.status(404).json("this event can not be updated by this user");
   }
 };
 
@@ -394,7 +415,7 @@ const toggleNeighborhood = async (req, res, next) => {
 
 //!-----------------------toggleComment en Statement-------------------
 
-const toggleComment = async (req, res, next) => {
+/*const toggleComment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { comments } = req.body;
@@ -468,7 +489,7 @@ const toggleComment = async (req, res, next) => {
       }) && next(error)
     );
   }
-};
+};*/
 
 //!-----------------------toggleLike en Statement-------------------
 
@@ -604,7 +625,6 @@ module.exports = {
   getByIdStatement,
   toggleUser,
   toggleNeighborhood,
-  toggleComment,
   toggleLike,
   updateStatement,
   getAllStatementLike,
