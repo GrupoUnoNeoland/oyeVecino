@@ -16,6 +16,7 @@ const createStatement = async (req, res, next) => {
     const StatementExist = await Statement.findOne({ title: req.body.title });
     if (!StatementExist) {
       const newStatement = new Statement({ ...req.body, images: catchImgs });
+      
 
       try {
         const StatementSave = await newStatement.save();
@@ -44,28 +45,37 @@ const createStatement = async (req, res, next) => {
 //!-----------------------DELETE STATEMNT---------------------------------------
 
 const deleteStatement = async (req, res, next) => {
-  const { id } = req.params;
+  const userLogged = req.user._id;
+  const isAdmin = req.user.rol === "admin";
 
   try {
     const { id } = req.params;
     const statementDelete = await Statement.findById(id);
     const statementDeleteImgs = statementDelete?.images;
 
-    await Statement.findByIdAndDelete(id);
+    if (statementDelete) {
+      const isUserLoggedTheStatementOwner =
+        userLogged._id.toString() == statementDelete.users[0]._id.toString();
+      console.log(
+        userLogged._id.toString(),
+        statementDelete.users[0]._id.toString()
+      );
+      if (isUserLoggedTheStatementOwner || isAdmin) {
+        await Statement.findByIdAndDelete(id);
 
     if (await Statement.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
-      statementDeleteImgs &&
-        statementDeleteImgs.forEach((image) => {
-          deleteImgCloudinary(image);
-        });
+        statementDeleteImgs &&
+          statementDeleteImgs.forEach((image) => {
+            deleteImgCloudinary(image);
+          });
 
-      try {
-        await User.updateMany(
-          { statements: id },
-          { $pull: { statements: id } }
-        );
+        try {
+          await User.updateMany(
+            { statements: id },
+            { $pull: { statements: id } }
+);
 
         try {
           const message = await Message.find({ recipientStatement: id });
@@ -86,16 +96,16 @@ const deleteStatement = async (req, res, next) => {
 
                 try {
                   await User.updateMany(
-                    { statementsFav: id },
-                    { $pull: { statementsFav: id } }
-                  );
-                  return res.status(200).json("deleted ok");
+                { statementsFav: id },
+                { $pull: { statementsFav: id } }
+              );
+              return res.status(200).json("deleted ok");
                 } catch (error) {
                   return res.status(404).json("statementsFav not deleted");
                 }
               } catch (error) {
                 return res.status(404).json("statement message not deleted");
-              }
+}
             } catch (error) {
               return res.status(404).json("statement rating not deleted");
             }
@@ -106,17 +116,20 @@ const deleteStatement = async (req, res, next) => {
           }
         } catch (error) {
           return res
-            .status(404)
-            .json("statementsComments not deleted from user");
+          .status(404)
+          .json("statementsComments not deleted from user");
         }
       } catch (error) {
         return res.status(404).json("statement offered not deleted from user");
       }
+    } else {
+      return res.status(404).json("this statement do not exist");
     }
   } catch (error) {
     return res.status(404).json(error.message);
   }
 };
+
 //--------------- GET ALL OF LIKE ---------------------------------------------------------------------------------
 const getAllStatementLike = async (req, res, next) => {
   try {
@@ -625,7 +638,7 @@ module.exports = {
   getByIdStatement,
   toggleUser,
   toggleNeighborhood,
-  toggleLike,
+    toggleLike,
   updateStatement,
   getAllStatementLike,
   toggleCity,
