@@ -70,12 +70,11 @@ const deleteServices = async (req, res, next) => {
             { $pull: { servicesDemanded: id } }
           );
           try {
-            const { _id } = await Message.find({ recipientService: id });
-            console.log("🚀 ~ deleteServices ~ messages:", messages);
-
+            const message = await Message.find({ recipientService: id });
+            const messageId = message[0]._id.toString();
             await User.updateMany(
-              { servicesComments: _id },
-              { $pull: { servicesComments: _id } }
+              { servicesComments: messageId },
+              { $pull: { servicesComments: messageId } }
             );
             try {
               await Neighborhood.updateMany(
