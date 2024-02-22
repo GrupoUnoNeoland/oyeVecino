@@ -13,19 +13,31 @@ const {
   toggleComment,
   toggleLike,
   updateStatement,
+  getAllStatementLike,
+  toggleCity,
 } = require("../controllers/Statement.controller");
+
+StatementRoutes.get("/getalllike", [isAuth], getAllStatementLike);
 
 StatementRoutes.patch("/add/:id", [isAuth], toggleUser);
 StatementRoutes.patch("/add/neighborhoods/:id", [isAuth], toggleNeighborhood);
 StatementRoutes.patch("/add/comments/:id", [isAuth], toggleComment);
+StatementRoutes.patch("/add/city/:id", [isAuth], toggleCity);
 StatementRoutes.patch("/add/likes/:id", [isAuth], toggleLike);
+
 StatementRoutes.get("/", [isAuth], getAllStatement);
 StatementRoutes.delete("/delete/:id", [isAuth], deleteStatement);
 StatementRoutes.get("/:id", [isAuth], getByIdStatement);
-StatementRoutes.post("/create", [isAuth], upload.array("images", 5), createStatement);
+StatementRoutes.post(
+  "/create",
+  [isAuth],
+  upload.array("images", 5),
+  createStatement
+);
 StatementRoutes.patch(
-  "/update/statement/:id", [isAuth],
-  upload.array("image", 5),
+  "/update/statement/:id",
+  [isAuth],
+  upload.array("images", 5),
   updateStatement
 );
 

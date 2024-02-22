@@ -42,19 +42,22 @@ const createServices = async (req, res, next) => {
 };
 //-------------- DELETE
 const deleteServices = async (req, res, next) => {
+  const { id } = req.params;
+
   try {
     const { id } = req.params;
     const serviceDelete = await Service.findById(id);
-    const serviceDeleteImgs = serviceDelete.images;
+    const serviceDeleteImgs = serviceDelete?.images;
 
     await Service.findByIdAndDelete(id);
 
     if (await Service.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
-      serviceDeleteImgs.forEach((image) => {
-        deleteImgCloudinary(image);
-      });
+      serviceDeleteImgs &&
+        serviceDeleteImgs.forEach((image) => {
+          deleteImgCloudinary(image);
+        });
 
       try {
         await User.updateMany(
@@ -67,32 +70,43 @@ const deleteServices = async (req, res, next) => {
             { $pull: { servicesDemanded: id } }
           );
           try {
-            await Neighborhood.updateMany(
-              { services: id },
-              { $pull: { services: id } }
+            const message = await Message.find({ recipientService: id });
+            const messageId = message[0]._id.toString();
+            await User.updateMany(
+              { servicesComments: messageId },
+              { $pull: { servicesComments: messageId } }
             );
-
             try {
-              await Message.updateMany(
-                { recipientService: id },
-                { $pull: { recipientService: id } }
+              await Neighborhood.updateMany(
+                { services: id },
+                { $pull: { services: id } }
               );
-              return res.status(200).json("service deleted ok");
+              try {
+                await Rating.deleteMany({ service: id });
+                try {
+                  await Message.deleteMany({ recipientService: id });
+                  return res.status(200).json("deleted ok");
+                } catch (error) {
+                  return res.status(404).json("service message not deleted");
+                }
+              } catch (error) {
+                return res.status(404).json("Service rating not deleted");
+              }
             } catch (error) {
               return res
                 .status(404)
-                .json("recipientService not deleted from message");
+                .json("Service  not deleted from neighborhood");
             }
           } catch (error) {
             return res
               .status(404)
-              .json("service not deleted from neighborhood");
+              .json("servicesComments not deleted from user");
           }
         } catch (error) {
-          return res.status(404).json("serviceDemanded not deleted froms user");
+          return res.status(404).json("service demanded not deleted from user");
         }
       } catch (error) {
-        return res.status(404).json("servicesOffered not deleted from user");
+        return res.status(404).json("service offered not deleted from user");
       }
     }
   } catch (error) {
@@ -123,7 +137,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users offered",
+                  error: "error update provider offered",
                   message: error.message,
                 }) && next(error);
               }
@@ -144,7 +158,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -160,7 +174,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -186,10 +200,10 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
       const arrayIdUsers = users.split(",");
       Promise.all(
         arrayIdUsers.map(async (user) => {
-          if (serviceById.users.includes(user)) {
+          if (serviceById.provider.includes(user)) {
             try {
               await Service.findByIdAndUpdate(id, {
-                $pull: { users: user },
+                $pull: { provider: user },
               });
 
               try {
@@ -198,7 +212,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users demanded",
+                  error: "error update provider demanded",
                   message: error.message,
                 }) && next(error);
               }
@@ -211,7 +225,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
           } else {
             try {
               await Service.findByIdAndUpdate(id, {
-                $push: { users: user },
+                $push: { provider: user },
               });
               try {
                 await User.findByIdAndUpdate(user, {
@@ -219,7 +233,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
                 });
               } catch (error) {
                 res.status(404).json({
-                  error: "error update users",
+                  error: "error update provider",
                   message: error.message,
                 }) && next(error);
               }
@@ -235,7 +249,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
         .catch((error) => res.status(404).json(error.message))
         .then(async () => {
           return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("users"),
+            dataUpdate: await Service.findById(id).populate("provider"),
           });
         });
     } else {
@@ -374,81 +388,81 @@ const toggleCity = async (req, res, next) => {
   }
 };
 
-//-------------- TOGGLE COMMENTS
-const toggleComments = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-    const serviceById = await Service.findById(id);
+// //-------------- TOGGLE COMMENTS
+// const toggleComments = async (req, res, next) => {
+// try {
+//   const { id } = req.params;
+//   const { comments } = req.body;
+//   const serviceById = await Service.findById(id);
 
-    if (serviceById) {
-      const arrayIdComments = comments.split(",");
-      Promise.all(
-        arrayIdComments.map(async (comment) => {
-          if (serviceById.comments.includes(comment)) {
-            try {
-              await Service.findByIdAndUpdate(id, {
-                $pull: { comments: comment },
-              });
+//   if (serviceById) {
+//     const arrayIdComments = comments.split(",");
+//     Promise.all(
+//       arrayIdComments.map(async (comment) => {
+//         if (serviceById.comments.includes(comment)) {
+//           try {
+//             await Service.findByIdAndUpdate(id, {
+//               $pull: { comments: comment },
+//             });
 
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $pull: { services: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update comment",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update service",
-                message: error.message,
-              }) && next(error);
-            }
-          } else {
-            try {
-              await Service.findByIdAndUpdate(id, {
-                $push: { comments: comment },
-              });
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $push: { services: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update comments",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update service",
-                message: error.message,
-              }) && next(error);
-            }
-          }
-        })
-      )
-        .catch((error) => res.status(404).json(error.message))
-        .then(async () => {
-          return res.status(200).json({
-            dataUpdate: await Service.findById(id).populate("comments"),
-          });
-        });
-    } else {
-      return res.status(404).json("this service doesn't exist");
-    }
-  } catch (error) {
-    return (
-      res.status(404).json({
-        error: "error catch",
-        message: error.message,
-      }) && next(error)
-    );
-  }
-};
+//             try {
+//               await Message.findByIdAndUpdate(comment, {
+//                 $pull: { services: id },
+//               });
+//             } catch (error) {
+//               res.status(404).json({
+//                 error: "error update comment",
+//                 message: error.message,
+//               }) && next(error);
+//             }
+//           } catch (error) {
+//             res.status(404).json({
+//               error: "error update service",
+//               message: error.message,
+//             }) && next(error);
+//           }
+//         } else {
+//           try {
+//             await Service.findByIdAndUpdate(id, {
+//               $push: { comments: comment },
+//             });
+//             try {
+//               await Message.findByIdAndUpdate(comment, {
+//                 $push: { services: id },
+//               });
+//             } catch (error) {
+//               res.status(404).json({
+//                 error: "error update comments",
+//                 message: error.message,
+//               }) && next(error);
+//             }
+//           } catch (error) {
+//             res.status(404).json({
+//               error: "error update service",
+//               message: error.message,
+//             }) && next(error);
+//           }
+//         }
+//       })
+//     )
+//       .catch((error) => res.status(404).json(error.message))
+//       .then(async () => {
+//         return res.status(200).json({
+//           dataUpdate: await Service.findById(id).populate("comments"),
+//         });
+//       });
+//   } else {
+//     return res.status(404).json("this service doesn't exist");
+//   }
+// } catch (error) {
+//   return (
+//     res.status(404).json({
+//       error: "error catch",
+//       message: error.message,
+//     }) && next(error)
+//   );
+// }
+// };
 
 //-------------- UPDATE
 const updateServices = async (req, res, next) => {
@@ -518,7 +532,7 @@ const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceById = await Service.findById(id).populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods starReview"
     );
     if (serviceById) {
       return res.status(200).json(serviceById);
@@ -533,7 +547,7 @@ const getByIdService = async (req, res, next) => {
 const getAllServices = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "users comments neighborhoods"
+      "provider comments neighborhoods"
     );
     if (allServices.length > 0) {
       return res.status(200).json(allServices);
@@ -552,7 +566,7 @@ const getAllServices = async (req, res, next) => {
 const getAllServicesStar = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
-      "starReview users comments neighborhoods"
+      "starReview provider comments neighborhoods"
     );
 
     if (allServices.length > 0) {
@@ -621,12 +635,12 @@ module.exports = {
   toggleUsersServiceOffered,
   toggleUsersServiceDemanded,
   toggleNeighborhoods,
-  toggleComments,
+  toggleCity,
   getByIdService,
   getAllServices,
   getByNameServices,
   updateServices,
   calculateStarsAverage,
-  toggleCity,
+
   getAllServicesStar,
 };

@@ -171,7 +171,7 @@ const getByIdEvent = async (req, res, next) => {
 //!--------------------UPDATE EVENT----------------------------
 
 const updateEvent = async (req, res, next) => {
-  let catchImg = req.files?.image && req.files?.image[0].path;
+  let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
 
@@ -179,15 +179,18 @@ const updateEvent = async (req, res, next) => {
     await Event.syncIndexes();
 
     const patchEvent = new Event(req.body);
-
-    req.files?.image && (patchEvent.images = catchImg);
+    console.log(patchEvent);
 
     try {
       const eventToUpdate = await Event.findById(id);
+      req.files.length > 0
+        ? (patchEvent.images = catchImg)
+        : (patchEvent.images = eventToUpdate.images);
 
-      req.files?.image &&
+      req.files.length > 0 &&
         eventToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchEvent._id = eventToUpdate._id;
+      console.log(patchEvent);
       await Event.findByIdAndUpdate(id, patchEvent);
 
       const updateKeys = Object.keys(req.body);
@@ -205,9 +208,9 @@ const updateEvent = async (req, res, next) => {
           });
         }
       });
-
-      if (req.files.image) {
-        updateEvent.images === catchImg
+      console.log(req.files);
+      if (req.files) {
+        catchImg.length > 0
           ? testUpdate.push({
               image: true,
             })
@@ -543,6 +546,55 @@ const toggleLike = async (req, res, next) => {
   }
 };
 
+const toggleCity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { city } = req.body;
+    const eventById = await Event.findById(id);
+
+    if (eventById) {
+      if (eventById.city.includes(city)) {
+        try {
+          await Event.findByIdAndUpdate(id, {
+            $pull: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update event",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await Event.findByIdAndUpdate(id, {
+            $push: { city: city },
+          });
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update event",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this event doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createEvent,
   deleteEvent,
@@ -554,4 +606,5 @@ module.exports = {
   toggleSponsor,
   toggleLike,
   getAllEventsLike,
+  toggleCity,
 };

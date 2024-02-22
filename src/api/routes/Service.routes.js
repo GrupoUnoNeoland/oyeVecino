@@ -38,7 +38,6 @@ ServiceRoutes.patch(
 ServiceRoutes.get("/getallorder", [isAuth], getAllServicesStar);
 ServiceRoutes.patch("/add/neighborhoods/:id", [isAuth], toggleNeighborhoods);
 ServiceRoutes.patch("/add/city/:id", [isAuth], toggleCity);
-ServiceRoutes.patch("/add/comments/:id", [isAuth], toggleComments);
 ServiceRoutes.get("/:id", [isAuth], getByIdService);
 ServiceRoutes.get("/", [isAuth], getAllServices);
 ServiceRoutes.get("/byName/:title", [isAuth], getByNameServices);
