@@ -167,65 +167,71 @@ const getByIdStatement = async (req, res, next) => {
 //!--------------------UPDATE STATEMENT----------------------------
 
 const updateStatement = async (req, res, next) => {
+  const userLogged = req.user._id
+  const isAdmin = req.user.rol === "admin"
+  const isUserLoggedTheStatementOwner = userLogged._id.toString() == statementDelete.users[0]._id.toString()
   let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
-
-  try {
-    await Statement.syncIndexes();
-
-    const patchStatement = new Statement(req.body);
-
-    req.files.length > 0 && (patchStatement.images = catchImg);
-
+  if (isUserLoggedTheStatementOwner || isAdmin) {
     try {
-      const statementToUpdate = await Statement.findById(id);
-      req.files.length > 0
-        ? (patchStatement.images = catchImg)
-        : (patchStatement.images = statementToUpdate.images);
+      await Statement.syncIndexes();
 
-      req.files.length > 0 &&
-        statementToUpdate.images.forEach((image) => deleteImgCloudinary(image));
-      patchStatement._id = statementToUpdate._id;
-      await Statement.findByIdAndUpdate(id, patchStatement);
+      const patchStatement = new Statement(req.body);
 
-      const updateKeys = Object.keys(req.body);
-      const updateStatement = await Statement.findById(id);
-      const testUpdate = [];
+      req.files.length > 0 && (patchStatement.images = catchImg);
 
-      updateKeys.forEach((item) => {
-        if (statementToUpdate[item] === req.body[item]) {
-          testUpdate.push({
-            [item]: false,
-          });
-        } else {
-          testUpdate.push({
-            [item]: true,
-          });
+      try {
+        const statementToUpdate = await Statement.findById(id);
+        req.files.length > 0
+          ? (patchStatement.images = catchImg)
+          : (patchStatement.images = statementToUpdate.images);
+
+        req.files.length > 0 &&
+          statementToUpdate.images.forEach((image) => deleteImgCloudinary(image));
+        patchStatement._id = statementToUpdate._id;
+        await Statement.findByIdAndUpdate(id, patchStatement);
+
+        const updateKeys = Object.keys(req.body);
+        const updateStatement = await Statement.findById(id);
+        const testUpdate = [];
+
+        updateKeys.forEach((item) => {
+          if (statementToUpdate[item] === req.body[item]) {
+            testUpdate.push({
+              [item]: false,
+            });
+          } else {
+            testUpdate.push({
+              [item]: true,
+            });
+          }
+        });
+
+        if (req.files) {
+          catchImg.length > 0
+            ? testUpdate.push({
+              image: true,
+            })
+            : testUpdate.push({
+              image: false,
+            });
         }
-      });
 
-      if (req.files) {
-        catchImg.length > 0
-          ? testUpdate.push({
-            image: true,
-          })
-          : testUpdate.push({
-            image: false,
-          });
+        return res.status(200).json({
+          updateStatement,
+          testUpdate,
+        });
+      } catch (error) {
+        req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
+        return res.status(404).json(error.message);
       }
-
-      return res.status(200).json({
-        updateStatement,
-        testUpdate,
-      });
     } catch (error) {
       req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
-      return res.status(404).json(error.message);
+      return next(error);
     }
-  } catch (error) {
-    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
-    return next(error);
+  } else {
+    return res.status(404).json("this event can not be updated by this user")
   }
 };
 
