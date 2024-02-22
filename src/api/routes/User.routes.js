@@ -1,6 +1,6 @@
 const { isAuth, isAuthAdmin, isAuthSuperAdmin } = require("../../middleware/auth.middleware");
 const { upload } = require("../../middleware/files.middleware");
-const { register, resendCode, sendCode, checkCodeNewUser, login, autoLogin, forgotPassword, sendPassword, modifyPassword, update, deleteUser, getAll, getById, toggleNeighborhood, toggleOfferedService, toggleDemandedService, togglePostedStatements, toggleFavEvents, toggleFavStatements, registerAdmin, toggleCity } = require("../controllers/User.controllers");
+const { register, resendCode, sendCode, checkCodeNewUser, login, autoLogin, forgotPassword, sendPassword, modifyPassword, update, deleteUser, getAll, getById, toggleNeighborhood, toggleOfferedService, toggleDemandedService, togglePostedStatements, toggleFavEvents, toggleFavStatements, registerAdmin, toggleCity, toggleRequestInUser } = require("../controllers/User.controllers");
 const express = require("express");
 const UserRoutes = express.Router();
 
@@ -30,6 +30,7 @@ UserRoutes.patch("/add/statement/:id", [isAuth], togglePostedStatements);
 UserRoutes.patch("/add/eventsfav/:id", [isAuth], toggleFavEvents);
 UserRoutes.patch("/add/statementsfav/:id", [isAuth], toggleFavStatements);
 UserRoutes.patch("/add/city/:id", [isAuth], toggleCity);
+UserRoutes.patch("/add/request/:id", [isAuthAdmin], toggleRequestInUser);
 
 
 module.exports = UserRoutes;

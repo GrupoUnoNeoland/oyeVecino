@@ -21,7 +21,7 @@ const createMessage = async (req, res, next) => {
 
         newMessage.recipientUser = id;
         newMessage.images = catchImages;
-        newMessage.owner = req.user;
+        newMessage.owner = req.user._id;
         const savedMessage = await newMessage.save();
 
         try {
@@ -222,7 +222,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientEvent = [id];
       newMessage.images = catchImages;
-      newMessage.owner = req.user;
+      newMessage.owner = req.user._id;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -266,7 +266,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientStatement = [id];
       newMessage.images = catchImages;
-      newMessage.owner = req.user;
+      newMessage.owner = req.user._id;
       try {
         const savedMessage = await newMessage.save();
         try {
