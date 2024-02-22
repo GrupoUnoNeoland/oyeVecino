@@ -472,15 +472,14 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.file.path;
+  let catchImg = req.file?.path;
 
   try {
     await User.syncIndexes();
 
     const patchUser = new User(req.body);
-
-    req.files.image && (patchUser.image = catchImg);
-    req.files.document && (patchUser.document = catchDocument);
+    console.log(req.file)
+    req.file.path && (patchUser.image = catchImg);
 
     patchUser._id = req.user._id;
     patchUser.password = req.user.password;
@@ -498,7 +497,7 @@ const update = async (req, res, next) => {
     try {
       await User.findByIdAndUpdate(req.user._id, patchUser);
 
-      req.file.path && deleteImgCloudinary(req.user.image);
+      req.file?.path && deleteImgCloudinary(req.user.image);
 
       const updateUser = await User.findById(req.user._id);
 
@@ -507,7 +506,7 @@ const update = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateUser[item] === req.body[item]) {
+        if (updateUser[item] == req.body[item]) {
           if (updateUser[item] != req.user[item]) {
             testUpdate.push({
               [item]: true,
@@ -523,8 +522,8 @@ const update = async (req, res, next) => {
           });
         }
       });
-
-      if (req.file.path) {
+      console.log("image", catchImg)
+      if (catchImg) {
         updateUser.image === catchImg
           ? testUpdate.push({
             image: true,
@@ -532,6 +531,10 @@ const update = async (req, res, next) => {
           : testUpdate.push({
             image: false,
           });
+      } else {
+        testUpdate.push({
+          image: "sameOldInfo",
+        });
       }
 
       return res.status(200).json({
@@ -539,11 +542,11 @@ const update = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.file.path && deleteImgCloudinary(catchImg);
+      req.file?.path && deleteImgCloudinary(catchImg);
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.file.path && deleteImgCloudinary(catchImg);
+    req.file?.path && deleteImgCloudinary(catchImg);
     return next(error);
   }
 };
@@ -788,7 +791,7 @@ const toggleOfferedService = async (req, res, next) => {
 
               try {
                 await Service.findByIdAndUpdate(service, {
-                  $pull: { users: id },
+                  $pull: { provider: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -809,7 +812,7 @@ const toggleOfferedService = async (req, res, next) => {
               });
               try {
                 await Service.findByIdAndUpdate(service, {
-                  $push: { users: id },
+                  $push: { provider: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -942,7 +945,7 @@ const togglePostedStatements = async (req, res, next) => {
 
               try {
                 await Statement.findByIdAndUpdate(statement, {
-                  $pull: { users: id },
+                  $pull: { owner: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -963,7 +966,7 @@ const togglePostedStatements = async (req, res, next) => {
               });
               try {
                 await Statement.findByIdAndUpdate(statement, {
-                  $push: { users: id },
+                  $push: { owner: id },
                 });
               } catch (error) {
                 res.status(404).json({
