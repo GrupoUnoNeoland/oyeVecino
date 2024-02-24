@@ -7,25 +7,20 @@ const statementSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
     description: {
       type: String,
       required: true,
       trim: true,
     },
-
     images: [
       {
         type: String,
       },
     ],
-    city: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
-    },
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
     owner: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },
     ],
