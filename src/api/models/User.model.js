@@ -27,9 +27,6 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       validate: [validator.isStrongPassword], //minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1
     },
-    city: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }]
-    },
     adress: {
       type: String,
       required: true,
@@ -42,9 +39,6 @@ const UserSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-    },
-    request: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }]
     },
     adressChecked: {
       type: Boolean,
@@ -81,6 +75,8 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
+    request: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
     neighborhoods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" }],
     servicesOffered: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
     servicesDemanded: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
@@ -94,8 +90,8 @@ const UserSchema = new mongoose.Schema(
     eventsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     statementsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
     sponsoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    starsReviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }],
-    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }]
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    starsReviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }]
   },
   {
     timestamps: true,
