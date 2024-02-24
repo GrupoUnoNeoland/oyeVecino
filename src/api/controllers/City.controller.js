@@ -198,6 +198,7 @@ const deleteCity = async (req, res, next) => {
     if (cityDelete) {
       try {
         await City.findByIdAndDelete(id);
+        cityImages && cityImages.forEach((image) => deleteImgCloudinary(image));
         try {
           await Neighborhood.deleteMany({ city: id });
           try {
@@ -288,3 +289,9 @@ module.exports = {
   toggleNeighborhoodInCity,
   toggleUserInCity,
 };
+
+
+
+
+
+
