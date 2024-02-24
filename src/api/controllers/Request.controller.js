@@ -5,10 +5,9 @@ const Request = require("../models/Request.model");
 
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
+const Neighborhood = require("../models/Neighborhood.model");
 
 dotenv.config();
-
-//--------- create
 
 const createRequest = async (req, res, next) => {
   try {
@@ -16,7 +15,7 @@ const createRequest = async (req, res, next) => {
     await Request.syncIndexes();
 
     const requestExist = await Request.findOne({ user: req.user._id });
-    console.log("requestExist", requestExist)
+    console.log("requestExist", requestExist);
 
     if (!requestExist) {
       const newRequest = new Request({
@@ -79,12 +78,11 @@ const createRequest = async (req, res, next) => {
   }
 };
 
-//-----
 const toggleUserInRequest = async (req, res, next) => {
   try {
     console.log(req.user);
     const { id } = req.params;
-    const userId = req.user._id;
+    const userId = req.body.userId;
     console.log();
 
     const userById = await User.findById(userId);
@@ -149,12 +147,12 @@ const toggleUserInRequest = async (req, res, next) => {
 const toggleNeighborhoodInRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const neighborhoodId = req.user.neighborhoods[0];
-    console.log(neighborhoodId);
+    const neighborhoodId = req.body.neighborhoodId;
+    console.log("neighborhood", neighborhoodId);
 
     // const userById = await User.findById(userId);
     const requestById = await Request.findById(id);
-    console.log(requestById);
+    console.log("request", requestById);
 
     if (requestById) {
       if (requestById.neighborhoods.includes(neighborhoodId)) {
@@ -162,9 +160,19 @@ const toggleNeighborhoodInRequest = async (req, res, next) => {
           await Request.findByIdAndUpdate(id, {
             $pull: { neighborhoods: neighborhoodId },
           });
-          return res.status(200).json({
-            dataUpdate: await Request.findById(id),
-          });
+          try {
+            await Neighborhood.findByIdAndUpdate(neighborhoodId, {
+              $pull: { requests: id },
+            });
+            return res.status(200).json({
+              dataUpdate: await Request.findById(id),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update request key in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
         } catch (error) {
           res.status(404).json({
             error: "error update neighborhoods key in request",
@@ -176,9 +184,20 @@ const toggleNeighborhoodInRequest = async (req, res, next) => {
           await Request.findByIdAndUpdate(id, {
             $push: { neighborhoods: neighborhoodId },
           });
-          return res.status(200).json({
-            dataUpdate: await Request.findById(id).populate("neighborhoods"),
-          });
+          try {
+            await Neighborhood.findByIdAndUpdate(neighborhoodId, {
+              $push: { requests: id },
+            });
+
+            return res.status(200).json({
+              dataUpdate: await Request.findById(id).populate("neighborhoods"),
+            });
+          } catch (error) {
+            res.status(404).json({
+              error: "error update request key in neighborhood",
+              message: error.message,
+            }) && next(error);
+          }
         } catch (error) {
           res.status(404).json({
             error: "error update neighborhoods key in request",
@@ -199,7 +218,57 @@ const toggleNeighborhoodInRequest = async (req, res, next) => {
   }
 };
 
-//----------- delete
+const toggleCityInRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const cityId = req.user.city[0];
+    console.log(cityId);
+
+    const requestById = await Request.findById(id);
+    console.log(requestById);
+
+    if (requestById) {
+      if (requestById.city.includes(cityId)) {
+        try {
+          await Request.findByIdAndUpdate(id, {
+            $pull: { city: cityId },
+          });
+          return res.status(200).json({
+            dataUpdate: await Request.findById(id),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update city key in request",
+            message: error.message,
+          }) && next(error);
+        }
+      } else {
+        try {
+          await Request.findByIdAndUpdate(id, {
+            $push: { city: cityId },
+          });
+          return res.status(200).json({
+            dataUpdate: await Request.findById(id).populate("city"),
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update city key in request",
+            message: error.message,
+          }) && next(error);
+        }
+      }
+    } else {
+      return res.status(404).json("this request doesn't exist");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
 
 const deleteRequest = async (req, res, next) => {
   try {
@@ -211,10 +280,22 @@ const deleteRequest = async (req, res, next) => {
         await Request.findByIdAndDelete(id);
         try {
           deleteImgCloudinary(requestDelete.document);
-          await User.findByIdAndUpdate(req.user._id, {
+          await User.findByIdAndUpdate(requestDelete.user[0].toString(), {
             $pull: { request: id },
           });
-          return res.status(200).json("request key updated in user");
+          try {
+            await Neighborhood.findByIdAndUpdate(
+              requestDelete.neighborhoods[0].toString(),
+              {
+                $pull: { requests: id },
+              }
+            );
+            return res.status(200).json("request key updated in neighborhood");
+          } catch (error) {
+            return res
+              .status(404)
+              .json("request not deleted from neighborhood");
+          }
         } catch (error) {
           return res.status(404).json("request not deleted from user");
         }
@@ -229,7 +310,6 @@ const deleteRequest = async (req, res, next) => {
   }
 };
 
-//----------- get by id
 const getByIdRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -247,8 +327,6 @@ const getByIdRequest = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-
-//--------- get all
 
 const getAllRequest = async (req, res, next) => {
   try {
@@ -275,4 +353,5 @@ module.exports = {
   getAllRequest,
   toggleUserInRequest,
   toggleNeighborhoodInRequest,
+  toggleCityInRequest,
 };
