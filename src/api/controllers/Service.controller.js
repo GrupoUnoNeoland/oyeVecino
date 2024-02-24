@@ -612,14 +612,17 @@ const calculateStarsAverage = async (req, res, next) => {
 
   try {
     const allUserReviews = await Rating.find({ userServiceProvider: id });
+    console.log("allUserReviews", allUserReviews);
     const allStars = allUserReviews.map((review) => review.stars);
+    console.log("allStars", allStars);
     const totalStars = allStars.reduce((acc, currentStar) => {
       acc += currentStar;
       return acc;
     }, 0);
 
     const starsAverage = Math.round(totalStars / allStars.length);
-    return starsAverage;
+    console.log("starsAverage", starsAverage);
+    return res.status(200).json({ starsAverage: starsAverage });
   } catch (error) {
     return res
       .status(404)
