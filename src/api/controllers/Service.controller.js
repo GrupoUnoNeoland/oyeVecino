@@ -4,9 +4,7 @@ const User = require("../models/User.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Message = require("../models/Message.model");
 const Rating = require("../models/Rating.model");
-const City = require("../models/City.model");
 
-//-------------- CREATE
 const createServices = async (req, res, next) => {
   let catchImgs = req?.files?.map((file) => file.path);
 
@@ -40,10 +38,8 @@ const createServices = async (req, res, next) => {
     return next(error);
   }
 };
-//-------------- DELETE
-const deleteServices = async (req, res, next) => {
-  const { id } = req.params;
 
+const deleteServices = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceDelete = await Service.findById(id);
@@ -71,20 +67,27 @@ const deleteServices = async (req, res, next) => {
           );
           try {
             const message = await Message.find({ recipientService: id });
-            const messageId = message[0]._id.toString();
-            await User.updateMany(
-              { servicesComments: messageId },
-              { $pull: { servicesComments: messageId } }
-            );
+            console.log(message.length);
+            if (message.length > 0) {
+              const messageId = message[0]._id.toString();
+
+              await User.updateMany(
+                { servicesComments: messageId },
+                { $pull: { servicesComments: messageId } }
+              );
+            }
+
             try {
               await Neighborhood.updateMany(
                 { services: id },
                 { $pull: { services: id } }
               );
               try {
-                await Rating.deleteMany({ service: id });
+                const rating = await Rating.find({ service: id });
+                rating && (await Rating.deleteMany({ service: id }));
                 try {
-                  await Message.deleteMany({ recipientService: id });
+                  message.length > 0 &&
+                    (await Message.deleteMany({ recipientService: id }));
                   return res.status(200).json("deleted ok");
                 } catch (error) {
                   return res.status(404).json("service message not deleted");
@@ -114,7 +117,6 @@ const deleteServices = async (req, res, next) => {
   }
 };
 
-//-------------- TOGGLE USERS OFFERED
 const toggleUsersServiceOffered = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -189,7 +191,7 @@ const toggleUsersServiceOffered = async (req, res, next) => {
     );
   }
 };
-//-------------- TOGGLE USERS DEMANDED
+
 const toggleUsersServiceDemanded = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -264,7 +266,7 @@ const toggleUsersServiceDemanded = async (req, res, next) => {
     );
   }
 };
-//-------------- TOGGLE NEIGHBORHOOD
+
 const toggleNeighborhoods = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -388,7 +390,6 @@ const toggleCity = async (req, res, next) => {
   }
 };
 
-// //-------------- TOGGLE COMMENTS
 // const toggleComments = async (req, res, next) => {
 // try {
 //   const { id } = req.params;
@@ -506,11 +507,11 @@ const updateServices = async (req, res, next) => {
         console.log(updateService.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -527,7 +528,6 @@ const updateServices = async (req, res, next) => {
   }
 };
 
-//-------------- GET BY ID --------------------------------------------------------------------------------
 const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -543,7 +543,7 @@ const getByIdService = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-//--------------- GET ALL ---------------------------------------------------------------------------------
+
 const getAllServices = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
@@ -562,7 +562,6 @@ const getAllServices = async (req, res, next) => {
   }
 };
 
-//--------------- GET ALL OF STARS ---------------------------------------------------------------------------------
 const getAllServicesStar = async (req, res, next) => {
   try {
     const allServices = await Service.find().populate(
@@ -590,7 +589,6 @@ const getAllServicesStar = async (req, res, next) => {
   }
 };
 
-//--------------- GET BY NAME------------------------------------------------------------------------------
 const getByNameServices = async (req, res, next) => {
   try {
     const { title } = req.params;
@@ -641,6 +639,5 @@ module.exports = {
   getByNameServices,
   updateServices,
   calculateStarsAverage,
-
   getAllServicesStar,
 };
