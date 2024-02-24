@@ -8,7 +8,6 @@ const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
-// --------------------------------------------------------------------------------
 const createNeighborhood = async (req, res, next) => {
   let catchImg = req.file?.path;
 
@@ -39,8 +38,6 @@ const createNeighborhood = async (req, res, next) => {
   }
 };
 
-//---------------------GET BY ID------------------------------------------
-
 const getByIdNeighborhood = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -57,8 +54,6 @@ const getByIdNeighborhood = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-
-//--------------------getAllNeighborhood---------------------
 
 const getAllNeighborhood = async (req, res, next) => {
   try {
@@ -78,8 +73,6 @@ const getAllNeighborhood = async (req, res, next) => {
     });
   }
 };
-
-//-------------------------------------------------------------------------------------------------------
 
 const deleteNeighborhood = async (req, res, next) => {
   try {
@@ -137,8 +130,6 @@ const deleteNeighborhood = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-
-//----------------------------------------------------------------------------------------------------------
 
 const updateNeighborhood = async (req, res, next) => {
   await Neighborhood.syncIndexes();
@@ -216,8 +207,6 @@ const updateNeighborhood = async (req, res, next) => {
     return res.status(404).json(error);
   }
 };
-
-//---------------------toggle Users:
 
 const toggleUsers = async (req, res, next) => {
   try {
@@ -297,8 +286,6 @@ const toggleUsers = async (req, res, next) => {
   }
 };
 
-//--------------------------toggle Services:
-
 const toggleServices = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -376,8 +363,6 @@ const toggleServices = async (req, res, next) => {
     );
   }
 };
-
-//-----------------------------------toggle EVENTS
 
 const toggleEvents = async (req, res, next) => {
   try {
@@ -457,8 +442,6 @@ const toggleEvents = async (req, res, next) => {
   }
 };
 
-//---------------------------toggle Statements
-
 const toggleStatements = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -536,7 +519,6 @@ const toggleStatements = async (req, res, next) => {
   }
 };
 
-//-----------------------------toggle cityes:
 const togglecityInNeighborhood = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -611,7 +593,6 @@ const togglecityInNeighborhood = async (req, res, next) => {
 module.exports = {
   createNeighborhood,
   deleteNeighborhood,
-
   updateNeighborhood,
   toggleUsers,
   toggleServices,
