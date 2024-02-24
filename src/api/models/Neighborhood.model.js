@@ -15,6 +15,7 @@ const NeighborhoodSchema = new mongoose.Schema({
     unique: true,
   },
   city: [{ type: mongoose.Schema.ObjectId, ref: "City" }],
+  request: [{ type: mongoose.Schema.ObjectId, ref: "Request" }],
   users: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   services: [{ type: mongoose.Schema.ObjectId, ref: "Service" }],
   events: [{ type: mongoose.Schema.ObjectId, ref: "Event" }],
