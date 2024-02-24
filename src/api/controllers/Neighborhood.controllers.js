@@ -42,7 +42,7 @@ const getByIdNeighborhood = async (req, res, next) => {
   try {
     const { id } = req.params;
     const neighborhoodById = await Neighborhood.findById(id).populate(
-      "users services events statements"
+      "users services events statements requests"
     );
 
     if (neighborhoodById) {
@@ -58,7 +58,7 @@ const getByIdNeighborhood = async (req, res, next) => {
 const getAllNeighborhood = async (req, res, next) => {
   try {
     const allneighborhood = await Neighborhood.find().populate(
-      "events statements users events"
+      "events statements users events requests"
     );
 
     if (allneighborhood.length > 0) {
