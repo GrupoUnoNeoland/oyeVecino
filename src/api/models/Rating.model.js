@@ -8,18 +8,24 @@ const RatingSchema = new Schema(
       min: 1,
       max: 5,
     },
-    userServiceProvider: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    userServiceTaker: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    service: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Service",
-    },
+    userServiceProvider: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    userServiceTaker: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    service: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Service",
+      },
+    ],
   },
   { timestamps: true }
 );
