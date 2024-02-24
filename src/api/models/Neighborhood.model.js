@@ -5,18 +5,16 @@ const NeighborhoodSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  city: [{ type: mongoose.Schema.ObjectId, ref: "City" }],
-
   image: {
     type: String,
     required: true,
   },
-
   postalCode: {
     type: String,
     required: true,
     unique: true,
   },
+  city: [{ type: mongoose.Schema.ObjectId, ref: "City" }],
   users: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   services: [{ type: mongoose.Schema.ObjectId, ref: "Service" }],
   events: [{ type: mongoose.Schema.ObjectId, ref: "Event" }],
