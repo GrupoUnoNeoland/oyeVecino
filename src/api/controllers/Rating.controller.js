@@ -1,47 +1,74 @@
 const User = require("../models/User.model");
 const Rating = require("../models/Rating.model");
+const Service = require("../models/Service.model");
 
 //------------------------------------* CREATE RATING--------------------------------------
 
 const createRating = async (req, res, next) => {
   try {
     await Rating.syncIndexes();
+    const service = await Service.findById(req.body.serviceId);
+    const userServiceProvider = service.provider[0];
 
     const customBody = {
       stars: req.body?.stars,
       userServiceTaker: req.user._id,
-      userServiceProvider: req.params.id,
+      userServiceProvider: userServiceProvider,
+      service: req.body.serviceId,
     };
 
-    const newRating = new Rating(customBody);
-    const savedRating = await newRating.save();
-    if (savedRating) {
-      try {
-        await User.findByIdAndUpdate(req.params.id, {
-          $push: { starsReviews: savedRating._id },
-        });
+    const isTheSameUser =
+      req.user._id.toString() == userServiceProvider.toString();
+    console.log(isTheSameUser);
+    if (!isTheSameUser) {
+      const newRating = new Rating(customBody);
+      const savedRating = await newRating.save();
+      console.log("savedRating", savedRating);
+      if (savedRating) {
         try {
-          await User.findByIdAndUpdate(req.body.company, {
-            $push: { companyStarsReviews: savedRating._id },
+          await User.findByIdAndUpdate(userServiceProvider, {
+            $push: { starsReviews: savedRating._id },
           });
+          try {
+            console.log(customBody.stars);
+            const points = customBody.stars * 10;
+            const user = await User.findById(userServiceProvider);
+            console.log(user.points);
+            const oldPoints = user.points || 0;
 
-          return res.status(200).json(savedRating);
+            const newPoints = oldPoints + points;
+            try {
+              await User.findByIdAndUpdate(userServiceProvider, {
+                points: newPoints,
+              });
+              return res
+                .status(200)
+                .json(await User.findById(userServiceProvider));
+            } catch (error) {
+              return res.status(404).json({
+                error: "can't update point in user",
+                message: error.message,
+              });
+            }
+          } catch (error) {
+            return res.status(404).json({
+              error: "can't find user",
+              message: error.message,
+            });
+          }
         } catch (error) {
           return res.status(404).json({
-            error: "Error catch al actualizar la empresa",
+            error: "Error catch al actualizar el user",
             message: error.message,
           });
         }
-      } catch (error) {
+      } else {
         return res.status(404).json({
-          error: "Error catch al actualizar el user",
-          message: error.message,
+          error: "Rating no guardado",
         });
       }
     } else {
-      return res.status(404).json({
-        error: "Rating no guardado",
-      });
+      return res.status(404).json("You can't rating yourself");
     }
   } catch (error) {
     return res.status(404).json({
@@ -51,18 +78,4 @@ const createRating = async (req, res, next) => {
   }
 };
 
-const calcultatePoints = async (req, res, next) => {
-  const { id } = req.params;
-
-  try {
-    const userStars = await User.stars.findById(id);
-    // const getPoints = await User.points.findById(id);
-    if (!userStars) {
-      return res.status(404).json("User stars not found");
-    }
-  } catch (error) {
-    return res.status(404).json("can't acces to points");
-  }
-};
-
-module.exports = { createRating, calcultatePoints };
+module.exports = { createRating };
