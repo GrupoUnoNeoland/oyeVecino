@@ -43,7 +43,7 @@ ServiceRoutes.get("/", [isAuth], getAllServices);
 ServiceRoutes.get("/byName/:title", [isAuth], getByNameServices);
 ServiceRoutes.patch(
   "/update/service/:id",
-  upload.array("image", 5),
+  upload.array("images", 5),
   [isAuth],
   updateServices
 );
