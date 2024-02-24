@@ -7,6 +7,7 @@ const {
   getAllCity,
   toggleNeighborhoodInCity,
   toggleUserInCity,
+  updateCity,
 } = require("../controllers/City.controller");
 const express = require("express");
 
@@ -27,5 +28,6 @@ CityRoutes.patch(
   toggleNeighborhoodInCity
 );
 CityRoutes.patch("/add/user/:id", [isAuthAdmin], toggleUserInCity);
+CityRoutes.patch("/update/:id", [isAuthAdmin], upload.array('images'), updateCity);
 
 module.exports = CityRoutes;
