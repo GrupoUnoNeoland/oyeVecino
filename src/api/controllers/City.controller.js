@@ -9,7 +9,6 @@ const Request = require("../models/Request.model");
 const dotenv = require("dotenv");
 dotenv.config();
 
-//------------- create
 const createCity = async (req, res, next) => {
   try {
     let catchImgs = req?.files?.map((file) => file.path);
@@ -39,6 +38,67 @@ const createCity = async (req, res, next) => {
     }
   } catch (error) {
     catchImgs.forEach((image) => deleteImgCloudinary(image));
+    return next(error);
+  }
+};
+
+const updateCity = async (req, res, next) => {
+  let catchImg = req.files.map((file) => file.path);
+  const { id } = req.params;
+
+  try {
+    await City.syncIndexes();
+
+    const patchCity = new City(req.body);
+
+    req.files && (patchCity.images = catchImg);
+
+    try {
+      const cityToUpdate = await City.findById(id);
+
+      req.files &&
+        cityToUpdate.images.forEach((image) => deleteImgCloudinary(image));
+      patchCity._id = cityToUpdate._id;
+      await City.findByIdAndUpdate(id, patchCity);
+
+      const updateKeys = Object.keys(req.body);
+      const updateCity = await City.findById(id);
+      const testUpdate = [];
+
+      updateKeys.forEach((item) => {
+        console.log(updateCity[item], req.body[item]);
+        if (cityToUpdate[item] !== req.body[item]) {
+          testUpdate.push({
+            [item]: true,
+          });
+        } else {
+          testUpdate.push({
+            [item]: false,
+          });
+        }
+      });
+
+      if (req.files) {
+        console.log(updateCity.images, catchImg);
+        catchImg.length > 0
+          ? testUpdate.push({
+            image: true,
+          })
+          : testUpdate.push({
+            image: false,
+          });
+      }
+
+      return res.status(200).json({
+        updateCity,
+        testUpdate,
+      });
+    } catch (error) {
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
+      return res.status(404).json(error.message);
+    }
+  } catch (error) {
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
@@ -188,7 +248,6 @@ const toggleUserInCity = async (req, res, next) => {
   }
 };
 
-//------------- delete
 const deleteCity = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -244,8 +303,6 @@ const deleteCity = async (req, res, next) => {
   }
 };
 
-//------------- get by id
-
 const getByIdCity = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -261,7 +318,6 @@ const getByIdCity = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-//------------- get all
 
 const getAllCity = async (req, res, next) => {
   try {
@@ -288,6 +344,7 @@ module.exports = {
   getAllCity,
   toggleNeighborhoodInCity,
   toggleUserInCity,
+  updateCity
 };
 
 
