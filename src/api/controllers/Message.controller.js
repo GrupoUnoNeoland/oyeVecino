@@ -223,34 +223,34 @@ const createMessage = async (req, res, next) => {
       newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
+        // try {
+        //   await User.findByIdAndUpdate(req.user._id, {
+        //     $push: {
+        //       eventsComments: savedMessage._id,
+        //     },
+        //   });
         try {
-          await User.findByIdAndUpdate(req.user._id, {
+          await Event.findByIdAndUpdate(id, {
             $push: {
-              eventsComments: savedMessage._id,
+              comments: savedMessage._id,
             },
           });
-          try {
-            await Event.findByIdAndUpdate(id, {
-              $push: {
-                comments: savedMessage._id,
-              },
-            });
-            return res.status(200).json({
-              event: await Event.findById(id),
-              comment: savedMessage,
-            });
-          } catch (error) {
-            return res.status(404).json({
-              error: "Comments key was not updated",
-              idMessage: newMessage._id,
-            });
-          }
+          return res.status(200).json({
+            event: await Event.findById(id),
+            comment: savedMessage,
+          });
         } catch (error) {
           return res.status(404).json({
-            error: "eventComments key was not updated",
+            error: "Comments key was not updated",
             idMessage: newMessage._id,
           });
         }
+        // } catch (error) {
+        //   return res.status(404).json({
+        //     error: "eventComments key was not updated",
+        //     idMessage: newMessage._id,
+        //   });
+        // }
       } catch (error) {
         if (req.files) {
           req.files.forEach((image) => deleteImgCloudinary(image.path));
@@ -267,34 +267,28 @@ const createMessage = async (req, res, next) => {
       newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
+        // try {
+        //   await User.findByIdAndUpdate(req.user._id, {
+        //     $push: {
+        //       statementsComments: savedMessage._id,
+        //     },
+        //   });
         try {
-          await User.findByIdAndUpdate(req.user._id, {
+          await Statement.findByIdAndUpdate(id, {
             $push: {
-              statementsComments: savedMessage._id,
+              comments: savedMessage._id,
             },
           });
           try {
-            await Statement.findByIdAndUpdate(id, {
+            await Service.findByIdAndUpdate(id, {
               $push: {
                 comments: savedMessage._id,
               },
             });
-            try {
-              await Service.findByIdAndUpdate(id, {
-                $push: {
-                  comments: savedMessage._id,
-                },
-              });
-              return res.status(200).json({
-                service: await Service.findById(id),
-                comment: savedMessage,
-              });
-            } catch (error) {
-              return res.status(404).json({
-                error: "Comments key was not updated",
-                idMessage: newMessage._id,
-              });
-            }
+            return res.status(200).json({
+              service: await Service.findById(id),
+              comment: savedMessage,
+            });
           } catch (error) {
             return res.status(404).json({
               error: "Comments key was not updated",
@@ -303,10 +297,16 @@ const createMessage = async (req, res, next) => {
           }
         } catch (error) {
           return res.status(404).json({
-            error: "statementsComments key was not updated",
+            error: "Comments key was not updated",
             idMessage: newMessage._id,
           });
         }
+        // } catch (error) {
+        //   return res.status(404).json({
+        //     error: "statementsComments key was not updated",
+        //     idMessage: newMessage._id,
+        //   });
+        // }
       } catch (error) {
         if (req.files) {
           req.files.forEach((image) => deleteImgCloudinary(image.path));
@@ -324,34 +324,34 @@ const createMessage = async (req, res, next) => {
       console.log("🚀 ~ createMessage ~ newMessage:", newMessage);
       try {
         const savedMessage = await newMessage.save();
+        // try {
+        //   await User.findByIdAndUpdate(req.user._id, {
+        //     $push: {
+        //       servicesComments: savedMessage._id,
+        //     },
+        //   });
         try {
-          await User.findByIdAndUpdate(req.user._id, {
+          await Service.findByIdAndUpdate(id, {
             $push: {
-              servicesComments: savedMessage._id,
+              comments: savedMessage._id,
             },
           });
-          try {
-            await Service.findByIdAndUpdate(id, {
-              $push: {
-                comments: savedMessage._id,
-              },
-            });
-            return res.status(200).json({
-              message: await Event.findById(id),
-              comment: savedMessage,
-            });
-          } catch (error) {
-            return res.status(404).json({
-              error: "Comments key was not updated",
-              idMessage: newMessage._id,
-            });
-          }
+          return res.status(200).json({
+            message: await Event.findById(id),
+            comment: savedMessage,
+          });
         } catch (error) {
           return res.status(404).json({
-            error: "servicesComments key was not updated",
+            error: "Comments key was not updated",
             idMessage: newMessage._id,
           });
         }
+        // } catch (error) {
+        //   return res.status(404).json({
+        //     error: "servicesComments key was not updated",
+        //     idMessage: newMessage._id,
+        //   });
+        // }
       } catch (error) {
         if (req.files) {
           req.files.forEach((image) => deleteImgCloudinary(image.path));
@@ -456,60 +456,55 @@ const deleteMessege = async (req, res, next) => {
     if (await Message.findById(id)) {
       return res.status(404).json("message not deleted");
     } else if (type == "service") {
+      // try {
+      //   await User.updateMany(
+      //     { servicesComments: id },
+      //     { $pull: { servicesComments: id } }
+      //   );
       try {
-        await User.updateMany(
-          { servicesComments: id },
-          { $pull: { servicesComments: id } }
-        );
-        try {
-          await Service.updateMany(
-            { comments: id },
-            { $pull: { comments: id } }
-          );
-          return res.status(200).json("comments key updated");
-        } catch (error) {
-          return res
-            .status(404)
-            .json("comments key was not updated in service");
-        }
+        await Service.updateMany({ comments: id }, { $pull: { comments: id } });
+        return res.status(200).json("comments key updated");
       } catch (error) {
-        return res.status(404).json("serviceComents was not updated un user");
+        return res.status(404).json("comments key was not updated in service");
       }
+      // } catch (error) {
+      //   return res.status(404).json("serviceComents was not updated un user");
+      // }
     } else if (type == "event") {
+      // try {
+      //   await User.updateMany(
+      //     { eventsComments: id },
+      //     { $pull: { eventsComments: id } }
+      //   );
       try {
-        await User.updateMany(
-          { eventsComments: id },
-          { $pull: { eventsComments: id } }
-        );
-        try {
-          await Event.updateMany({ comments: id }, { $pull: { comments: id } });
-          return res.status(200).json("EventsComments key updated");
-        } catch (error) {
-          return res.status(404).json("comments in event was not updated");
-        }
+        await Event.updateMany({ comments: id }, { $pull: { comments: id } });
+        return res.status(200).json("comments key updated in event");
       } catch (error) {
-        return res.status(404).json("eventsComments in user was not updated");
+        return res.status(404).json("comments in event was not updated");
       }
+      // } catch (error) {
+      //   return res.status(404).json("eventsComments in user was not updated");
+      // }
     } else if (type == "statement") {
+      // try {
+      //   await User.updateMany(
+      //     { statementsComments: id },
+      //     { $pull: { statementsComments: id } }
+      //   );
       try {
-        await User.updateMany(
-          { statementsComments: id },
-          { $pull: { statementsComments: id } }
+        await Statement.updateMany(
+          { comments: id },
+          { $pull: { comments: id } }
         );
-        try {
-          await Statement.updateMany(
-            { comments: id },
-            { $pull: { comments: id } }
-          );
-          return res.status(200).json("comments key updated");
-        } catch (error) {
-          return res.status(404).json("comments in statement was not updated");
-        }
+        return res.status(200).json("comments key updated");
       } catch (error) {
-        return res
-          .status(404)
-          .json("statementsComments was not updated in user");
+        return res.status(404).json("comments in statement was not updated");
       }
+      // } catch (error) {
+      //   return res
+      //     .status(404)
+      //     .json("statementsComments was not updated in user");
+      // }
     } else if (type == "private") {
       try {
         await User.findByIdAndUpdate(owner, { $pull: { postedMessages: id } });
