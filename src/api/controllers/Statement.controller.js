@@ -372,82 +372,6 @@ const toggleNeighborhood = async (req, res, next) => {
   }
 };
 
-const toggleComment = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-
-    const statementById = await Statement.findById(id);
-    if (statementById) {
-      const arrayIdcomment = comments.split(",");
-
-      await Promise.all(
-        arrayIdcomment.map(async (comment) => {
-          if (statementById.comments.includes(comment)) {
-            try {
-              await Statement.findByIdAndUpdate(id, {
-                $pull: { comments: comments },
-              });
-
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $pull: { statements: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update statements",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update comments",
-                message: error.message,
-              }) && next(error);
-            }
-          } else {
-            try {
-              await Statement.findByIdAndUpdate(id, {
-                $push: { comments: comment },
-              });
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $push: { comments: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update statements",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update comments",
-                message: error.message,
-              }) && next(error);
-            }
-          }
-        })
-      )
-        .catch((error) => res.status(404).json({ error: error.message }))
-        .then(async () => {
-          return res.status(200).json({
-            dataUpdate: await Statement.findById(id).populate("comments"),
-          });
-        });
-    } else {
-      return res.status(404).json("statement not found");
-    }
-  } catch (error) {
-    return (
-      res.status(404).json({
-        error: "error catch",
-        message: error.message,
-      }) && next(error)
-    );
-  }
-};
-
 const toggleCity = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -504,7 +428,6 @@ module.exports = {
   getByIdStatement,
   toggleUser,
   toggleNeighborhood,
-  toggleComment,
   updateStatement,
   getAllStatementLike,
   toggleCity,
