@@ -601,5 +601,4 @@ module.exports = {
   deleteMessege,
   getAllMessages,
   getByIdMessage,
-  toggleUsers,
 };
