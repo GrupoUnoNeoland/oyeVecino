@@ -295,82 +295,6 @@ const toggleNeighborhood = async (req, res, next) => {
   }
 };
 
-const toggleComment = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-
-    const eventById = await Event.findById(id);
-    if (eventById) {
-      const arrayIdcomment = comments.split(",");
-
-      await Promise.all(
-        arrayIdcomment.map(async (comment) => {
-          if (eventById.comments.includes(comment)) {
-            try {
-              await Event.findByIdAndUpdate(id, {
-                $pull: { comments: comments },
-              });
-
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $pull: { recipientEvent: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update events",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update comments",
-                message: error.message,
-              }) && next(error);
-            }
-          } else {
-            try {
-              await Event.findByIdAndUpdate(id, {
-                $push: { comments: comment },
-              });
-              try {
-                await Message.findByIdAndUpdate(comment, {
-                  $push: { recipientEvent: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update events push",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update comments",
-                message: error.message,
-              }) && next(error);
-            }
-          }
-        })
-      )
-        .catch((error) => res.status(404).json({ error: error.message }))
-        .then(async () => {
-          return res.status(200).json({
-            dataUpdate: await Event.findById(id).populate("comments"),
-          });
-        });
-    } else {
-      return res.status(404).json("event not found");
-    }
-  } catch (error) {
-    return (
-      res.status(404).json({
-        error: "error catch",
-        message: error.message,
-      }) && next(error)
-    );
-  }
-};
-
 const toggleSponsor = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -523,82 +447,6 @@ const toggleOrganizer = async (req, res, next) => {
   }
 };
 
-const toggleLike = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const likes = req.body.eventsFav;
-    console.log(req.body);
-    const eventById = await Event.findById(id);
-    if (eventById) {
-      const arrayIdlike = likes.split(",");
-
-      await Promise.all(
-        arrayIdlike.map(async (like) => {
-          if (eventById.likes.includes(like)) {
-            try {
-              await Event.findByIdAndUpdate(id, {
-                $pull: { likes: like },
-              });
-
-              try {
-                await User.findByIdAndUpdate(like, {
-                  $pull: { eventsFav: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update events",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update likes",
-                message: error.message,
-              }) && next(error);
-            }
-          } else {
-            try {
-              await Event.findByIdAndUpdate(id, {
-                $push: { likes: like },
-              });
-              try {
-                await User.findByIdAndUpdate(like, {
-                  $push: { eventsFav: id },
-                });
-              } catch (error) {
-                res.status(404).json({
-                  error: "error update events",
-                  message: error.message,
-                }) && next(error);
-              }
-            } catch (error) {
-              res.status(404).json({
-                error: "error update likes",
-                message: error.message,
-              }) && next(error);
-            }
-          }
-        })
-      )
-        .catch((error) => res.status(404).json({ error: error.message }))
-        .then(async () => {
-          return res.status(200).json({
-            dataUpdate: await Event.findById(id).populate("likes"),
-          });
-        });
-    } else {
-      return res.status(404).json("event not found");
-    }
-  } catch (error) {
-    return (
-      res.status(404).json({
-        error: "error catch",
-        message: error.message,
-      }) && next(error)
-    );
-  }
-};
-
 const toggleCity = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -654,10 +502,8 @@ module.exports = {
   getAllEvent,
   getByIdEvent,
   toggleNeighborhood,
-  toggleComment,
   updateEvent,
   toggleSponsor,
-  toggleLike,
   getAllEventsLike,
   toggleCity,
   toggleOrganizer,
