@@ -115,9 +115,19 @@ const toggleUserInRequest = async (req, res, next) => {
           await User.findByIdAndUpdate(userId, { $push: { request: id } });
           try {
             await Request.findByIdAndUpdate(id, { $push: { user: userId } });
-            return res.status(200).json({
-              dataUpdate: await Request.findById(id),
-            });
+            try {
+              await Neighborhood.findByIdAndUpdate(neighborhoodId, {
+                $push: { requests: id },
+              });
+              return res.status(200).json({
+                dataUpdate: await Request.findById(id).populate("neighborhoods"),
+              });
+            } catch (error) {
+              res.status(404).json({
+                error: "error update request key in neighborhood",
+                message: error.message,
+              }) && next(error);
+            }
           } catch (error) {
             res.status(404).json({
               error: "error update user key in request",
