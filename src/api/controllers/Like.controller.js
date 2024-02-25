@@ -3,6 +3,7 @@ const Like = require("../models/Like.model");
 const Event = require("../models/Event.model");
 const Statement = require("../models/Statement.model");
 
+
 const createLike = async (req, res, next) => {
   try {
     await Like.syncIndexes();
@@ -17,11 +18,16 @@ const createLike = async (req, res, next) => {
 
       const newLike = new Like(customBody);
       try {
-        const thereIsAlreadyALike = await Like.findOne({
-          event: req.params.id,
+        const thereIsAlreadyALike = await Like.find({
+          $and: [
+            { userLike: req.user._id },
+            {
+              event: req.params.id,
+            },
+          ],
         });
 
-        if (!thereIsAlreadyALike) {
+        if (thereIsAlreadyALike.length == 0) {
           const savedLike = await newLike.save();
           if (savedLike) {
             try {
@@ -91,11 +97,17 @@ const createLike = async (req, res, next) => {
 
       const newLike = new Like(customBody);
       try {
-        const thereIsAlreadyALike = await Like.findOne({
-          statement: req.params.id,
+        const thereIsAlreadyALike = await Like.find({
+          $and: [
+            { userLike: req.user._id },
+            {
+              statement: req.params.id,
+            },
+          ],
         });
+        console.log("like", thereIsAlreadyALike);
 
-        if (!thereIsAlreadyALike) {
+        if (thereIsAlreadyALike.length == 0) {
           const savedLike = await newLike.save();
           if (savedLike) {
             try {
