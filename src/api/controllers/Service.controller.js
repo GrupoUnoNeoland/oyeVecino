@@ -43,18 +43,16 @@ const deleteServices = async (req, res, next) => {
   try {
     const { id } = req.params;
     const serviceDelete = await Service.findById(id);
-    const serviceDeleteImgs = serviceDelete?.images;
+    const serviceDeleteImgs = serviceDelete.images;
 
     await Service.findByIdAndDelete(id);
 
     if (await Service.findById(id)) {
       return res.status(404).json("not deleted");
     } else {
-      serviceDeleteImgs &&
-        serviceDeleteImgs.forEach((image) => {
-          deleteImgCloudinary(image);
-        });
-
+      serviceDeleteImgs.forEach((image) => {
+        deleteImgCloudinary(image);
+      });
       try {
         await User.updateMany(
           { servicesOffered: id },
@@ -66,44 +64,27 @@ const deleteServices = async (req, res, next) => {
             { $pull: { servicesDemanded: id } }
           );
           try {
-            const message = await Message.find({ recipientService: id });
-            console.log(message.length);
-            if (message.length > 0) {
-              const messageId = message[0]._id.toString();
-
-              await User.updateMany(
-                { servicesComments: messageId },
-                { $pull: { servicesComments: messageId } }
-              );
-            }
-
+            await Neighborhood.updateMany(
+              { services: id },
+              { $pull: { services: id } }
+            );
             try {
-              await Neighborhood.updateMany(
-                { services: id },
-                { $pull: { services: id } }
-              );
+              await Message.deleteMany({ recipientService: id });
               try {
-                const rating = await Rating.find({ service: id });
-                rating && (await Rating.deleteMany({ service: id }));
-                try {
-                  message.length > 0 &&
-                    (await Message.deleteMany({ recipientService: id }));
-                  return res.status(200).json("deleted ok");
-                } catch (error) {
-                  return res.status(404).json("service message not deleted");
-                }
+                await Rating.deleteMany({ service: serviceDelete._id });
+                return res.status(200).json("rating deleted ok from services");
               } catch (error) {
-                return res.status(404).json("Service rating not deleted");
+                return res.status(404).json("rating not deleted");
               }
             } catch (error) {
               return res
                 .status(404)
-                .json("Service  not deleted from neighborhood");
+                .json("recipientService not deleted from message");
             }
           } catch (error) {
             return res
               .status(404)
-              .json("servicesComments not deleted from user");
+              .json("services not deleted from neighborhood");
           }
         } catch (error) {
           return res.status(404).json("service demanded not deleted from user");
@@ -507,11 +488,11 @@ const updateServices = async (req, res, next) => {
         console.log(updateService.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
