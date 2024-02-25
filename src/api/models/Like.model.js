@@ -8,13 +8,28 @@ const LikeSchema = new Schema(
       required: true,
       max: 1,
     },
-    userLike: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    userLike: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     type: {
       type: String,
       enum: ["event", "statement"],
     },
-    event: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    statement: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
+    event: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Event",
+      },
+    ],
+    statement: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Statement",
+      },
+    ],
   },
   { timestamps: true }
 );
