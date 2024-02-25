@@ -577,7 +577,7 @@ const deleteUser = async (req, res, next) => {
 const getAll = async (req, res, next) => {
   try {
     const allUser = await User.find().populate(
-      "neighborhoods servicesOffered servicesDemanded servicesComments eventsComments statementsComments receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents"
+      "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents"
     );
 
     if (allUser.length > 0) {
@@ -599,7 +599,7 @@ const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const usersById = await User.findById(id).populate(
-      "neighborhoods servicesOffered servicesDemanded servicesComments eventsComments statementsComments receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents"
+      "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents"
     );
     if (usersById) {
       return res.status(200).json(usersById);
