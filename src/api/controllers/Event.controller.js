@@ -1,5 +1,3 @@
-//!-----CREATE EVENT-----
-
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const Event = require("../models/Event.model.js");
 const Message = require("../models/Message.model.js");
@@ -44,8 +42,6 @@ const createEvent = async (req, res, next) => {
   }
 };
 
-//!-----------------------DELETE---------------------------------------
-
 const deleteEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -78,20 +74,17 @@ const deleteEvent = async (req, res, next) => {
                 { recipientEvent: id },
                 { $pull: { recipientEvent: id } }
               );
-              return res.status(200).json("service deleted ok");
+              return res.status(200).json("event deleted ok");
             } catch (error) {
               return res
                 .status(404)
                 .json("recipientEvent not deleted from message");
             }
-            return res.status(200).json("ok deleted");
           } catch (error) {
-            return res
-              .status(404)
-              .json("service not deleted from neighborhood");
+            return res.status(404).json("event not deleted from neighborhood");
           }
         } catch (error) {
-          return res.status(404).json("serviceDemanded not deleted");
+          return res.status(404).json("eventDemanded not deleted");
         }
       } catch (error) {
         return res.status(404).json("user not deleted");
@@ -101,8 +94,6 @@ const deleteEvent = async (req, res, next) => {
     return res.status(404).json(error.message);
   }
 };
-
-//--------------- GET ALL OF LIKE ---------------------------------------------------------------------------------
 
 const getAllEventsLike = async (req, res, next) => {
   try {
@@ -129,8 +120,6 @@ const getAllEventsLike = async (req, res, next) => {
   }
 };
 
-//!--------------------getAllEvent---------------------
-
 const getAllEvent = async (req, res, next) => {
   try {
     const allevent = await Event.find().populate(
@@ -150,8 +139,6 @@ const getAllEvent = async (req, res, next) => {
   }
 };
 
-//!------------------getByIdEvent-----------------------
-
 const getByIdEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -168,10 +155,8 @@ const getByIdEvent = async (req, res, next) => {
   }
 };
 
-//!--------------------UPDATE EVENT----------------------------
-
 const updateEvent = async (req, res, next) => {
-  let catchImg = req.files && req.files.map((file) => file.path);
+  let catchImg = req.files.map((file) => file.path);
 
   const { id } = req.params;
 
@@ -179,18 +164,16 @@ const updateEvent = async (req, res, next) => {
     await Event.syncIndexes();
 
     const patchEvent = new Event(req.body);
-    console.log(patchEvent);
+
+    req.files && (patchEvent.images = catchImg);
+    console.log(patchEvent.images);
 
     try {
       const eventToUpdate = await Event.findById(id);
-      req.files.length > 0
-        ? (patchEvent.images = catchImg)
-        : (patchEvent.images = eventToUpdate.images);
-
-      req.files.length > 0 &&
+      console.log("eventToUpdate", eventToUpdate);
+      req.files &&
         eventToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchEvent._id = eventToUpdate._id;
-      console.log(patchEvent);
       await Event.findByIdAndUpdate(id, patchEvent);
 
       const updateKeys = Object.keys(req.body);
@@ -198,7 +181,8 @@ const updateEvent = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        if (updateEvent[item] === req.body[item]) {
+        console.log(updateEvent[item], req.body[item]);
+        if (eventToUpdate[item] !== req.body[item]) {
           testUpdate.push({
             [item]: true,
           });
@@ -208,15 +192,16 @@ const updateEvent = async (req, res, next) => {
           });
         }
       });
-      console.log(req.files);
+
       if (req.files) {
+        console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -224,17 +209,15 @@ const updateEvent = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files?.image &&
-        catchImg.forEach((image) => deleteImgCloudinary(image));
+      console.log("hola");
+      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files?.image && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
-
-//!-----------------------toggleNeighborhood en Event-------------------
 
 const toggleNeighborhood = async (req, res, next) => {
   try {
@@ -312,8 +295,6 @@ const toggleNeighborhood = async (req, res, next) => {
   }
 };
 
-//!-----------------------toggleComment en Event-------------------
-
 const toggleComment = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -389,8 +370,6 @@ const toggleComment = async (req, res, next) => {
     );
   }
 };
-
-//!-----------------------toggleSponsor en Event-------------------
 
 const toggleSponsor = async (req, res, next) => {
   try {
@@ -468,7 +447,81 @@ const toggleSponsor = async (req, res, next) => {
   }
 };
 
-//!-----------------------toggleLike en EVENTS-------------------
+const toggleOrganizer = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { organizer } = req.body;
+
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdorganizer = organizer.split(",");
+
+      await Promise.all(
+        arrayIdorganizer.map(async (organizer) => {
+          if (eventById.organizer.includes(organizer)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { organizer: organizer },
+              });
+
+              try {
+                await User.findByIdAndUpdate(organizer, {
+                  $pull: { events: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update organizer",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { organizer: organizer },
+              });
+              try {
+                await User.findByIdAndUpdate(organizer, {
+                  $push: { events: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events push",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update organizer",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("organizer"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
 
 const toggleLike = async (req, res, next) => {
   try {
@@ -607,4 +660,5 @@ module.exports = {
   toggleLike,
   getAllEventsLike,
   toggleCity,
+  toggleOrganizer,
 };
