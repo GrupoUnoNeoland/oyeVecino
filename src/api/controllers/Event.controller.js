@@ -97,21 +97,14 @@ const deleteEvent = async (req, res, next) => {
 
 const getAllEventsLike = async (req, res, next) => {
   try {
-    const allEvents = await Event.find().populate("likes");
-    console.log(allEvents);
-    // if (allevent.length > 0) {
-    //   const allServicesStar = allServices.map((service) => {
-    //     const stars = service?.starReview?.stars || 0;
-    //     const obj = { ...service };
-    //     obj.stars = stars;
-    //     return obj;
-    //   });
+    const allEvents = await Event.find();
 
-    //   allServicesStar.sort((a, b) => b.stars - a.stars);
-    //   return res.status(200).json({ services: allServicesStar });
-    // } else {
-    //   return res.status(404).json("Services not found");
-    // }
+    if (allEvents.length > 0) {
+      allEvents.sort((a, b) => b.likes.length - a.likes.length);
+      return res.status(200).json({ events: allEvents });
+    } else {
+      return res.status(404).json("Event not found");
+    }
   } catch (error) {
     return res.status(404).json({
       error: "error al buscar - lanzado en el catch",
@@ -223,7 +216,6 @@ const toggleNeighborhood = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { neighborhoods } = req.body;
-
     const eventById = await Event.findById(id);
     if (eventById) {
       const arrayIdneighborhood = neighborhoods.split(",");
@@ -447,6 +439,82 @@ const toggleOrganizer = async (req, res, next) => {
   }
 };
 
+const toggleLike = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const likes = req.body.eventsFav;
+    console.log(req.body);
+    const eventById = await Event.findById(id);
+    if (eventById) {
+      const arrayIdlike = likes.split(",");
+
+      await Promise.all(
+        arrayIdlike.map(async (like) => {
+          if (eventById.likes.includes(like)) {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $pull: { likes: like },
+              });
+
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $pull: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Event.findByIdAndUpdate(id, {
+                $push: { likes: like },
+              });
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $push: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Event.findById(id).populate("likes"),
+          });
+        });
+    } else {
+      return res.status(404).json("event not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 const toggleCity = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -504,6 +572,7 @@ module.exports = {
   toggleNeighborhood,
   updateEvent,
   toggleSponsor,
+  toggleLike,
   getAllEventsLike,
   toggleCity,
   toggleOrganizer,
