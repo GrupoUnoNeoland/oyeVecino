@@ -1,4 +1,5 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Like = require("../models/Like.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Statement = require("../models/Statement.model");
@@ -39,62 +40,65 @@ const createStatement = async (req, res, next) => {
 };
 
 const deleteStatement = async (req, res, next) => {
-  const userLogged = req.user._id;
-  const isAdmin = req.user.rol === "admin";
-
   try {
     const { id } = req.params;
     const statementDelete = await Statement.findById(id);
-    const statementDeleteImgs = statementDelete?.images;
+    const statementDeleteImgs = statementDelete.images;
 
-    if (statementDelete) {
-      const isUserLoggedTheStatementOwner =
-        userLogged._id.toString() == statementDelete.owner[0]._id.toString();
-      console.log(
-        userLogged._id.toString(),
-        statementDelete.owner[0]._id.toString()
-      );
-      if (isUserLoggedTheStatementOwner || isAdmin) {
-        await Statement.findByIdAndDelete(id);
-        statementDeleteImgs &&
-          statementDeleteImgs.forEach((image) => {
-            deleteImgCloudinary(image);
-          });
+    await Statement.findByIdAndDelete(id);
+
+    if (await Statement.findById(id)) {
+      return res.status(404).json("not deleted");
+    } else {
+      statementDeleteImgs.forEach((image) => {
+        deleteImgCloudinary(image);
+      });
+
+      try {
+        await User.updateMany(
+          { statementsFav: id },
+          { $pull: { statementsFav: id } }
+        );
 
         try {
-          await User.updateMany(
-            { statementsFav: id },
-            { $pull: { statementsFav: id } }
+          await Neighborhood.updateMany(
+            { statements: id },
+            { $pull: { statements: id } }
           );
+
+          await Message.deleteMany({ recipientStatement: id });
           try {
-            await User.updateMany(
+            await User.updateOne(
               { statements: id },
               { $pull: { statements: id } }
             );
+            /*try {
+                await User.updateMany(
+                  { statementsComments: statementMessage._id },
+                  { $pull: { statementsComments: statementMessage._id } }
+                );*/
             try {
-              await Neighborhood.updateMany(
-                { statements: id },
-                { $pull: { statements: id } }
-              );
-              return res.status(200).json("ok deleted");
+              await Like.deleteMany({ statement: statementDelete._id });
+              return res.status(200).json("likes deleted ok from statements");
             } catch (error) {
-              return res
-                .status(404)
-                .json("statements user not deleted from neighborhood");
+              return res.status(404).json("likes not deleted");
             }
+            /*} catch (error) {
+                return res
+                  .status(404)
+                  .json("statementsComments not deleted from user");
+              }*/
           } catch (error) {
-            return res.status(404).json("statements  not deleted");
+            return res.status(404).json("statement not updated from user");
           }
         } catch (error) {
-          return res.status(404).json("statementFav not deleted");
+          return res
+            .status(404)
+            .json("statement not deleted from neighborhood");
         }
-      } else {
-        return res
-          .status(404)
-          .json("this event can not be deleted by this user");
+      } catch (error) {
+        return res.status(404).json("user not deleted");
       }
-    } else {
-      return res.status(404).json("this statement do not exist");
     }
   } catch (error) {
     return res.status(404).json(error.message);
@@ -196,11 +200,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files) {
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
