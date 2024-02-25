@@ -7,7 +7,6 @@ const EventSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
     description: {
       type: String,
       required: true,
@@ -34,9 +33,7 @@ const EventSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
-    city: {
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
-    },
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
     organizer: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
