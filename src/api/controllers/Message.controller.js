@@ -6,8 +6,6 @@ const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
-//----------------------------------------------------------------------
-
 const createMessage = async (req, res, next) => {
   try {
     const { type, images } = req.body;
@@ -21,7 +19,7 @@ const createMessage = async (req, res, next) => {
 
         newMessage.recipientUser = id;
         newMessage.images = catchImages;
-        newMessage.owner = req.user._id;
+        newMessage.owner = req.user;
         const savedMessage = await newMessage.save();
 
         try {
@@ -222,7 +220,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientEvent = [id];
       newMessage.images = catchImages;
-      newMessage.owner = req.user._id;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -266,7 +264,7 @@ const createMessage = async (req, res, next) => {
       const newMessage = new Message(req.body);
       newMessage.recipientStatement = [id];
       newMessage.images = catchImages;
-      newMessage.owner = req.user._id;
+      newMessage.owner = req.user;
       try {
         const savedMessage = await newMessage.save();
         try {
@@ -379,8 +377,6 @@ const createMessage = async (req, res, next) => {
   }
 };
 
-//---------------------GET BY ID------------------------------------------
-
 const getByIdMessage = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -397,13 +393,13 @@ const getByIdMessage = async (req, res, next) => {
   }
 };
 
-//-------------------------------------
-
 const updateMessage = async (req, res, next) => {
+  let catchImgs = req?.files?.map((file) => file.path);
   try {
     await Message.syncIndexes();
     const { id } = req.params;
     const MessageById = await Message.findById(id);
+
     let catchImgs = req?.files?.map((file) => file.path);
 
     if (MessageById) {
@@ -420,6 +416,7 @@ const updateMessage = async (req, res, next) => {
           await Message.findByIdAndUpdate(id, customBody);
           return res.status(200).json("Message update ok");
         } catch (error) {
+          catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
           return res.status(404).json("cannot update Message");
         }
       } else {
@@ -430,18 +427,19 @@ const updateMessage = async (req, res, next) => {
           await Message.findByIdAndUpdate(id, customBody);
           return res.status(200).json("Message update ok");
         } catch (error) {
+          catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
           return res.status(404).json("cannot update Message");
         }
       }
     } else {
+      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json("Message not exist");
     }
   } catch (error) {
+    catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return res.status(404).json(error);
   }
 };
-
-//-------------------------------delete message:------------------------
 
 const deleteMessege = async (req, res, next) => {
   try {
@@ -578,8 +576,6 @@ const deleteMessege = async (req, res, next) => {
   }
 };
 
-//-----------------------------get all messages:------------------------
-
 const getAllMessages = async (req, res, next) => {
   try {
     const allMessages = await Message.find().populate(
@@ -598,12 +594,6 @@ const getAllMessages = async (req, res, next) => {
     });
   }
 };
-
-//?-------------------------------------------
-//---------toggle para borrar servicesComments de User:
-//?--------------------------------------------
-
-const toggleUsers = async (req, res, next) => {};
 
 module.exports = {
   createMessage,
