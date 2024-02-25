@@ -1,5 +1,6 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const Event = require("../models/Event.model.js");
+const Like = require("../models/Like.model.js");
 const Message = require("../models/Message.model.js");
 const Neighborhood = require("../models/Neighborhood.model.js");
 const User = require("../models/User.model");
@@ -70,11 +71,29 @@ const deleteEvent = async (req, res, next) => {
               { $pull: { events: id } }
             );
             try {
-              await Message.updateMany(
-                { recipientEvent: id },
-                { $pull: { recipientEvent: id } }
-              );
-              return res.status(200).json("event deleted ok");
+              const eventMessage = await Message.find({ recipientEvent: id });
+              await Message.deleteMany({ recipientEvent: id });
+              try {
+                await User.updateOne({ events: id }, { $pull: { events: id } });
+                try {
+                  await User.updateMany(
+                    { eventsComments: eventMessage._id },
+                    { $pull: { eventsComments: eventMessage._id } }
+                  );
+                  try {
+                    await Like.deleteMany({ event: eventDelete._id });
+                    return res.status(200).json("likes deleted ok from events");
+                  } catch (error) {
+                    return res.status(404).json("likes not deleted");
+                  }
+                } catch (error) {
+                  return res
+                    .status(404)
+                    .json("eventsComments not deleted from user");
+                }
+              } catch (error) {
+                return res.status(404).json("event not updated from user");
+              }
             } catch (error) {
               return res
                 .status(404)
@@ -190,11 +209,11 @@ const updateEvent = async (req, res, next) => {
         console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
