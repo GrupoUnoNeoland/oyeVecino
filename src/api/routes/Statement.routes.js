@@ -9,7 +9,6 @@ const {
   getByIdStatement,
   toggleUser,
   toggleNeighborhood,
-  toggleComment,
   updateStatement,
   getAllStatementLike,
   toggleCity,
@@ -18,7 +17,6 @@ const {
 StatementRoutes.get("/getalllike", [isAuth], getAllStatementLike);
 StatementRoutes.patch("/add/:id", [isAuth], toggleUser);
 StatementRoutes.patch("/add/neighborhoods/:id", [isAuth], toggleNeighborhood);
-StatementRoutes.patch("/add/comments/:id", [isAuth], toggleComment);
 StatementRoutes.patch("/add/city/:id", [isAuth], toggleCity);
 StatementRoutes.get("/", [isAuth], getAllStatement);
 StatementRoutes.delete("/delete/:id", [isAuth], deleteStatement);
