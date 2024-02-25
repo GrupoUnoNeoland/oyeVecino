@@ -71,26 +71,25 @@ const deleteEvent = async (req, res, next) => {
               { $pull: { events: id } }
             );
             try {
-              const eventMessage = await Message.find({ recipientEvent: id });
               await Message.deleteMany({ recipientEvent: id });
               try {
                 await User.updateOne({ events: id }, { $pull: { events: id } });
-                try {
+                /*try {
                   await User.updateMany(
                     { eventsComments: eventMessage._id },
                     { $pull: { eventsComments: eventMessage._id } }
-                  );
-                  try {
-                    await Like.deleteMany({ event: eventDelete._id });
-                    return res.status(200).json("likes deleted ok from events");
-                  } catch (error) {
-                    return res.status(404).json("likes not deleted");
-                  }
+                  );*/
+                try {
+                  await Like.deleteMany({ event: eventDelete._id });
+                  return res.status(200).json("likes deleted ok from events");
                 } catch (error) {
+                  return res.status(404).json("likes not deleted");
+                }
+                /*} catch (error) {
                   return res
                     .status(404)
                     .json("eventsComments not deleted from user");
-                }
+                }*/
               } catch (error) {
                 return res.status(404).json("event not updated from user");
               }
