@@ -91,7 +91,6 @@ const UserSchema = new mongoose.Schema(
     statementsFav: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
     sponsoredEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    starsReviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }]
   },
   {
     timestamps: true,
