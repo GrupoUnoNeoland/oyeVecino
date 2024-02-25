@@ -30,6 +30,5 @@ const RatingSchema = new Schema(
   { timestamps: true }
 );
 
-// Create Company model
 const Rating = mongoose.model("Rating", RatingSchema);
 module.exports = Rating;
