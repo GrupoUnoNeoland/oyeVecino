@@ -2,8 +2,6 @@ const User = require("../models/User.model");
 const Rating = require("../models/Rating.model");
 const Service = require("../models/Service.model");
 
-//------------------------------------* CREATE RATING--------------------------------------
-
 const createRating = async (req, res, next) => {
   try {
     await Rating.syncIndexes();
@@ -26,39 +24,40 @@ const createRating = async (req, res, next) => {
       console.log("savedRating", savedRating);
       if (savedRating) {
         try {
-          await User.findByIdAndUpdate(userServiceProvider, {
-            $push: { starsReviews: savedRating._id },
-          });
-          try {
-            console.log(customBody.stars);
-            const points = customBody.stars * 10;
-            const user = await User.findById(userServiceProvider);
-            console.log(user.points);
-            const oldPoints = user.points || 0;
+          console.log(customBody.stars);
+          const points = customBody.stars * 10;
+          const user = await User.findById(userServiceProvider);
+          console.log(user.points);
+          const oldPoints = user.points || 0;
 
-            const newPoints = oldPoints + points;
+          const newPoints = oldPoints + points;
+          try {
+            await User.findByIdAndUpdate(userServiceProvider, {
+              points: newPoints,
+            });
             try {
-              await User.findByIdAndUpdate(userServiceProvider, {
-                points: newPoints,
+              console.log(customBody.stars);
+              await Service.findByIdAndUpdate(req.body.serviceId, {
+                $push: { starReview: savedRating._id },
               });
               return res
                 .status(200)
                 .json(await User.findById(userServiceProvider));
             } catch (error) {
               return res.status(404).json({
-                error: "can't update point in user",
+                error: "can't update starsReview in service",
                 message: error.message,
               });
             }
           } catch (error) {
             return res.status(404).json({
-              error: "can't find user",
+              error: "can't update point in user",
               message: error.message,
             });
           }
         } catch (error) {
           return res.status(404).json({
-            error: "Error catch al actualizar el user",
+            error: "can't find user",
             message: error.message,
           });
         }
