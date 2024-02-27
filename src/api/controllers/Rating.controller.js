@@ -29,8 +29,7 @@ const createRating = async (req, res, next) => {
           console.log(customBody.stars);
           const points = customBody.stars * 10;
           const user = await User.findById(userServiceProvider);
-          console.log(user.points);
-          const oldPoints = user.points || 0;
+          const oldPoints = user?.points || 0;
 
           const newPoints = oldPoints + points;
           try {
