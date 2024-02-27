@@ -7,6 +7,10 @@ const Statement = require("../models/Statement.model");
 const Event = require("../models/Event.model");
 const City = require("../models/City.model");
 const Request = require("../models/Request.model");
+const Message = require("../models/Message.model");
+const Rating = require("../models/Rating.model");
+const Chat = require("../models/Chat.model");
+const Like = require("../models/Like.model");
 
 const randomCode = require("../../utils/randomCode");
 const { generateToken } = require("../../utils/token");
@@ -16,6 +20,7 @@ const enumOk = require("../../utils/enumOk");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
+
 
 dotenv.config();
 
@@ -539,38 +544,125 @@ const update = async (req, res, next) => {
 };
 
 const deleteUser = async (req, res, next) => {
-  const isUser = req.user.rol === "vecino";
+  const { userId } = req.body;
+  const isTheUserToDelete = req.user.rol === "vecino" && userId == req.user._id.toString()
+
   const isAdmin = req.user.rol === "admin";
-  if (isUser) {
+  if (isTheUserToDelete || isAdmin) {
     try {
-      const { _id, image } = req.user;
-      await User.findByIdAndDelete(_id);
+      const userDelete = await User.findById(userId);
+      const image = userDelete.image
+      try {
+        const userDeleted = await User.findByIdAndDelete(userId);
+        if (!userDeleted) {
+          return res.status(404).json("not deleted"); ///
+        } else {
+          deleteImgCloudinary(image);
+        }
+        try {
+          await Neighborhood.updateMany(
+            { users: userId },
+            {
+              $pull: { users: userId },
+            }
+          );
+          try {
+            await Message.deleteMany({ recipientUser: userId });
+            try {
+              await Message.deleteMany({ owner: userId });
+              try {
+                await Event.deleteMany({ organizer: userId });
+                try {
+                  await Event.deleteMany({ sponsors: userId });
+                  try {
+                    await Service.deleteMany({ provider: userId });
+                    try {
+                      await Statement.deleteMany({ owner: userId });
+                      try {
+                        await Like.deleteMany({ userLike: userId });
+                        try {
+                          await Rating.deleteMany({ userServiceProvider: userId });
+                          try {
+                            await Rating.deleteMany({ userServiceTaker: userId });
+                            try {
+                              await Chat.deleteMany({ userOne: userId });
+                              try {
+                                await Chat.deleteMany({ userTwo: userId });
+                                try {
+                                  await Request.deleteMany({ user: userId });
+                                  return res.status(200).json("user deleted ok");
+                                } catch (error) {
+                                  return res
+                                    .status(404)
+                                    .json("request not deleted");
+                                }
+                              } catch (error) {
+                                return res
+                                  .status(404)
+                                  .json("chat not deleted");
+                              }
+                            } catch (error) {
+                              return res
+                                .status(404)
+                                .json("chat not deleted");
+                            }
+                          } catch (error) {
+                            return res
+                              .status(404)
+                              .json("user ratings not deleted");
+                          }
+                        } catch (error) {
+                          return res
+                            .status(404)
+                            .json("user ratings not deleted");
+                        }
+                      } catch (error) {
+                        return res
+                          .status(404)
+                          .json({ message: "user likes not deleted", error: error.message });
+                      }
+                    } catch (error) {
+                      return res
+                        .status(404)
+                        .json("user statements not deleted");
+                    }
+                  } catch (error) {
+                    return res
+                      .status(404)
+                      .json("user services not deleted");
+                  }
+                } catch (error) {
+                  return res
+                    .status(404)
+                    .json("user sponsor events not deleted");
+                }
+              } catch (error) {
+                return res
+                  .status(404)
+                  .json("user organizer events not deleted");
+              }
+            } catch (error) {
+              return res
+                .status(404)
+                .json("user posted messages not deleted");
+            }
 
-      if (await User.findById(_id)) {
-        return res.status(404).json("not deleted"); ///
-      } else {
-        deleteImgCloudinary(image);
-        return res.status(200).json("ok delete");
+          } catch (error) {
+            return res
+              .status(404)
+              .json({ message: "user received messages not deleted", error: error.message });
+          }
+        } catch (error) {
+          return res.status(404).json("users key not updated in neighborhood");
+        }
+      } catch (error) {
+        return res.status(404).json("users not deleted");
       }
     } catch (error) {
       return next(error);
     }
-  } else if (isAdmin) {
-    try {
-      const { userId } = req.body;
-      const { image } = await User.findById(userId);
-      await User.findByIdAndDelete(userId);
-      const userToDelete = await User.findById(userId);
-
-      if (userToDelete) {
-        return res.status(404).json("not deleted"); ///
-      } else {
-        deleteImgCloudinary(image);
-        return res.status(200).json("ok delete");
-      }
-    } catch (error) {
-      return next(error);
-    }
+  } else {
+    return res.status(404).json("It's not allowed to delete this user");
   }
 };
 
