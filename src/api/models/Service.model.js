@@ -14,7 +14,7 @@ const ServiceSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["ofered", "demanded"],
+      enum: ["offered", "demanded"],
       required: true,
       trim: true,
     },
