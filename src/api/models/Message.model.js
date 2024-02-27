@@ -22,6 +22,8 @@ const MessageSchema = new mongoose.Schema(
     recipientService: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
     recipientUser: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     recipientStatement: [{ type: mongoose.Schema.Types.ObjectId, ref: "Statement" }],
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
+    neighborhoods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" }],
   },
   {
     timestamps: true,

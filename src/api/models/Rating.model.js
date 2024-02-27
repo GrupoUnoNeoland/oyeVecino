@@ -26,6 +26,8 @@ const RatingSchema = new Schema(
         ref: "Service",
       },
     ],
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
+    neighborhoods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" }],
   },
   { timestamps: true }
 );

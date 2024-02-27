@@ -30,6 +30,8 @@ const LikeSchema = new Schema(
         ref: "Statement",
       },
     ],
+    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
+    neighborhoods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" }],
   },
   { timestamps: true }
 );
