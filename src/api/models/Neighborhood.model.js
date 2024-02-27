@@ -20,7 +20,6 @@ const NeighborhoodSchema = new mongoose.Schema({
   services: [{ type: mongoose.Schema.ObjectId, ref: "Service" }],
   events: [{ type: mongoose.Schema.ObjectId, ref: "Event" }],
   statements: [{ type: mongoose.Schema.ObjectId, ref: "Statement" }],
-  neighborhoods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" }],
 });
 
 const Neighborhood = mongoose.model("Neighborhood", NeighborhoodSchema);

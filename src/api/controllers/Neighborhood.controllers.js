@@ -1,4 +1,5 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Chat = require("../models/Chat.model");
 const City = require("../models/City.model");
 const Event = require("../models/Event.model");
 const Like = require("../models/Like.model");
@@ -15,9 +16,7 @@ const createNeighborhood = async (req, res, next) => {
 
   try {
     await Neighborhood.syncIndexes();
-    const { city } = req.params;
     const newNeighborhood = new Neighborhood(req.body);
-    newNeighborhood.city = city;
     if (req.file) {
       newNeighborhood.image = catchImg;
     } else {
@@ -109,7 +108,12 @@ const deleteNeighborhood = async (req, res, next) => {
                         await Message.deleteMany({ neighborhoods: id });
                         try {
                           await Rating.deleteMany({ neighborhoods: id });
-                          return res.status(200).json("all request deleted");
+                          try {
+                            await Chat.deleteMany({ neighborhoods: id });
+                            return res.status(200).json("neighborhood delete ok");
+                          } catch (error) {
+                            return res.status(200).json("all chats deleted");
+                          }
                         } catch (error) {
                           return res.status(200).json("all request deleted");
                         }
