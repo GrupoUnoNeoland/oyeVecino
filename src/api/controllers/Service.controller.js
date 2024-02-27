@@ -11,28 +11,28 @@ const createServices = async (req, res, next) => {
   try {
     await Service.syncIndexes();
 
-    const ServiceExist = await Service.findOne({ title: req.body.title });
-    if (!ServiceExist) {
-      const newService = new Service({ ...req.body, images: catchImgs });
+    // const ServiceExist = await Service.findOne({ title: req.body.title });
+    // if (!ServiceExist) {
+    const newService = new Service({ ...req.body, city: req.user.city[0], neighborhoods: req.user.neighborhoods[0], provider: req.user._id, images: catchImgs });
 
-      try {
-        const ServiceSave = await newService.save();
+    try {
+      const ServiceSave = await newService.save();
 
-        if (ServiceSave) {
-          return res.status(200).json({
-            service: ServiceSave,
-          });
-        } else {
-          return res.status(404).json("service not saved");
-        }
-      } catch (error) {
-        return res.status(404).json(error.message);
+      if (ServiceSave) {
+        return res.status(200).json({
+          service: ServiceSave,
+        });
+      } else {
+        return res.status(404).json("service not saved");
       }
-    } else {
-      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
-
-      return res.status(409).json("this service already exist");
+    } catch (error) {
+      return res.status(404).json(error.message);
     }
+    // } else {
+    //   catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
+
+    //   return res.status(409).json("this service already exist");
+    // }
   } catch (error) {
     catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
@@ -488,11 +488,11 @@ const updateServices = async (req, res, next) => {
         console.log(updateService.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
