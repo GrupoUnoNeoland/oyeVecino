@@ -1,12 +1,17 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
+const Chat = require("../models/Chat.model");
 const City = require("../models/City.model");
+const Event = require("../models/Event.model");
+const Like = require("../models/Like.model");
+const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
-const User = require("../models/User.model");
+const Rating = require("../models/Rating.model");
+const Request = require("../models/Request.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
-const Event = require("../models/Event.model");
-const Request = require("../models/Request.model");
+const User = require("../models/User.model");
 const dotenv = require("dotenv");
+
 dotenv.config();
 
 const createCity = async (req, res, next) => {
@@ -82,11 +87,11 @@ const updateCity = async (req, res, next) => {
         console.log(updateCity.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -278,7 +283,7 @@ const deleteCity = async (req, res, next) => {
                           await Rating.deleteMany({ city: id });
                           try {
                             await Chat.deleteMany({ city: id });
-                            return res.status(200).json("neighborhood delete ok");
+                            return res.status(200).json("city deleted ok");
                           } catch (error) {
                             return res.status(200).json("all chats deleted");
                           }
@@ -361,11 +366,5 @@ module.exports = {
   getAllCity,
   toggleNeighborhoodInCity,
   toggleUserInCity,
-  updateCity
+  updateCity,
 };
-
-
-
-
-
-
