@@ -266,28 +266,45 @@ const deleteCity = async (req, res, next) => {
               await Service.deleteMany({ city: id });
               try {
                 await Statement.deleteMany({ city: id });
-                console.log(await Statement.findOne({ city: id }));
                 try {
                   await Event.deleteMany({ city: id });
-                  console.log(await Event.findOne({ city: id }));
                   try {
                     await Request.deleteMany({ city: id });
-                    console.log(await Request.findOne({ city: id }));
-                    return res.status(200).json("all requests deleted");
+                    try {
+                      await Like.deleteMany({ city: id });
+                      try {
+                        await Message.deleteMany({ city: id });
+                        try {
+                          await Rating.deleteMany({ city: id });
+                          try {
+                            await Chat.deleteMany({ city: id });
+                            return res.status(200).json("neighborhood delete ok");
+                          } catch (error) {
+                            return res.status(200).json("all chats deleted");
+                          }
+                        } catch (error) {
+                          return res.status(200).json("all request deleted");
+                        }
+                      } catch (error) {
+                        return res.status(404).json("messages not deleted");
+                      }
+                    } catch (error) {
+                      return res.status(404).json("likes not deleted");
+                    }
                   } catch (error) {
                     return res.status(404).json("requests not deleted");
                   }
                 } catch (error) {
-                  return res.status(404).json("events not deleted");
+                  return res.status(404).json("event not deleted");
                 }
               } catch (error) {
-                return res.status(404).json("statements not deleted");
+                return res.status(404).json("statement not deleted");
               }
             } catch (error) {
-              return res.status(404).json("services not deleted");
+              return res.status(404).json("service not deleted");
             }
           } catch (error) {
-            return res.status(404).json("users not deleted");
+            return res.status(404).json("user not deleted");
           }
         } catch (error) {
           return res.status(404).json("neighborhoods not deleted");
