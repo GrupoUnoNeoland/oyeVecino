@@ -11,32 +11,34 @@ const createEvent = async (req, res, next) => {
   try {
     await Event.syncIndexes();
 
-    const EventExist = await Event.findOne({ title: req.body.title });
-    if (!EventExist) {
-      const newEvent = new Event({
-        ...req.body,
-        images: catchImgs,
-        organizer: req.user._id,
-      });
+    // const EventExist = await Event.findOne({ title: req.body.title });
+    // if (!EventExist) {
+    const newEvent = new Event({
+      ...req.body,
+      images: catchImgs,
+      organizer: req.user._id,
+      city: req.user.city[0],
+      neighborhoods: req.user.neighborhoods[0]
+    });
 
-      try {
-        const EventSave = await newEvent.save();
+    try {
+      const EventSave = await newEvent.save();
 
-        if (EventSave) {
-          return res.status(200).json({
-            service: EventSave,
-          });
-        } else {
-          return res.status(404).json("event not saved");
-        }
-      } catch (error) {
-        return res.status(404).json(error.message);
+      if (EventSave) {
+        return res.status(200).json({
+          service: EventSave,
+        });
+      } else {
+        return res.status(404).json("event not saved");
       }
-    } else {
-      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
-
-      return res.status(409).json("this event already exist");
+    } catch (error) {
+      return res.status(404).json(error.message);
     }
+    // } else {
+    //   catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
+
+    //   return res.status(409).json("this event already exist");
+    // }
   } catch (error) {
     catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
@@ -136,7 +138,6 @@ const getAllEvent = async (req, res, next) => {
     const allevent = await Event.find().populate(
       "comments likes neighborhoods sponsors"
     );
-    /** el find nos devuelve un array */
     if (allevent.length > 0) {
       return res.status(200).json(allevent);
     } else {
@@ -208,11 +209,11 @@ const updateEvent = async (req, res, next) => {
         console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
