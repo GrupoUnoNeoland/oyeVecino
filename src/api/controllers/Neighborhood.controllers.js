@@ -1,8 +1,10 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const City = require("../models/City.model");
 const Event = require("../models/Event.model");
+const Like = require("../models/Like.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
+const Rating = require("../models/Rating.model");
 const Request = require("../models/Request.model");
 const Service = require("../models/Service.model");
 const Statement = require("../models/Statement.model");
@@ -101,7 +103,22 @@ const deleteNeighborhood = async (req, res, next) => {
                   await Event.deleteMany({ neighborhoods: id });
                   try {
                     await Request.deleteMany({ neighborhoods: id });
-                    return res.status(200).json("all request deleted");
+                    try {
+                      await Like.deleteMany({ neighborhoods: id });
+                      try {
+                        await Message.deleteMany({ neighborhoods: id });
+                        try {
+                          await Rating.deleteMany({ neighborhoods: id });
+                          return res.status(200).json("all request deleted");
+                        } catch (error) {
+                          return res.status(200).json("all request deleted");
+                        }
+                      } catch (error) {
+                        return res.status(404).json("messages not deleted");
+                      }
+                    } catch (error) {
+                      return res.status(404).json("likes not deleted");
+                    }
                   } catch (error) {
                     return res.status(404).json("requests not deleted");
                   }
