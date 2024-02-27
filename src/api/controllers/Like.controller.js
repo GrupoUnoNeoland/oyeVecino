@@ -14,6 +14,8 @@ const createLike = async (req, res, next) => {
         userLike: req.user._id,
         event: req.params.id,
         type: "event",
+        city: req.user.city[0],
+        neighborhoods: req.user.neighborhoods[0]
       };
 
       const newLike = new Like(customBody);

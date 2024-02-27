@@ -13,6 +13,8 @@ const createRating = async (req, res, next) => {
       userServiceTaker: req.user._id,
       userServiceProvider: userServiceProvider,
       service: req.body.serviceId,
+      city: req.user.city[0],
+      neighborhoods: req.user.neighborhoods[0]
     };
 
     const isTheSameUser =

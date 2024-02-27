@@ -20,6 +20,9 @@ const createMessage = async (req, res, next) => {
         newMessage.recipientUser = id;
         newMessage.images = catchImages;
         newMessage.owner = req.user;
+        newMessage.city = req.user.city[0];
+        newMessage.neighborhoods = req.user.neighborhoods[0];
+
         const savedMessage = await newMessage.save();
 
         try {
@@ -153,6 +156,8 @@ const createMessage = async (req, res, next) => {
               userOne: req.user._id,
               userTwo: findUser._id,
               messages: [savedMessage._id],
+              neighborhoods: req.user.neighborhoods[0],
+              city: req.user.city[0],
             });
 
             try {
@@ -221,6 +226,8 @@ const createMessage = async (req, res, next) => {
       newMessage.recipientEvent = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user;
+      newMessage.city = req.user.city[0];
+      newMessage.neighborhoods = req.user.neighborhoods[0];
       try {
         const savedMessage = await newMessage.save();
         // try {
@@ -265,6 +272,8 @@ const createMessage = async (req, res, next) => {
       newMessage.recipientStatement = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user;
+      newMessage.city = req.user.city[0];
+      newMessage.neighborhoods = req.user.neighborhoods[0];
       try {
         const savedMessage = await newMessage.save();
         // try {
@@ -321,6 +330,8 @@ const createMessage = async (req, res, next) => {
       newMessage.recipientService = [id];
       newMessage.images = catchImages;
       newMessage.owner = req.user._id;
+      newMessage.city = req.user.city[0];
+      newMessage.neighborhoods = req.user.neighborhoods[0];
       console.log("🚀 ~ createMessage ~ newMessage:", newMessage);
       try {
         const savedMessage = await newMessage.save();
