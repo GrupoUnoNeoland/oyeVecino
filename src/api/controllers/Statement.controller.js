@@ -11,28 +11,28 @@ const createStatement = async (req, res, next) => {
   try {
     await Statement.syncIndexes();
 
-    const StatementExist = await Statement.findOne({ title: req.body.title });
-    if (!StatementExist) {
-      const newStatement = new Statement({ ...req.body, images: catchImgs });
+    // const StatementExist = await Statement.findOne({ title: req.body.title });
+    // if (!StatementExist) {
+    const newStatement = new Statement({ ...req.body, city: req.user.city[0], neighborhoods: req.user.neighborhoods[0], owner: req.user._id, images: catchImgs });
 
-      try {
-        const StatementSave = await newStatement.save();
+    try {
+      const StatementSave = await newStatement.save();
 
-        if (StatementSave) {
-          return res.status(200).json({
-            service: StatementSave,
-          });
-        } else {
-          return res.status(404).json("Statement not saved");
-        }
-      } catch (error) {
-        return res.status(404).json(error.message);
+      if (StatementSave) {
+        return res.status(200).json({
+          service: StatementSave,
+        });
+      } else {
+        return res.status(404).json("Statement not saved");
       }
-    } else {
-      catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
-
-      return res.status(409).json("this Statement already exist");
+    } catch (error) {
+      return res.status(404).json(error.message);
     }
+    // } else {
+    //   catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
+
+    //   return res.status(409).json("this Statement already exist");
+    // }
   } catch (error) {
     catchImgs && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
@@ -200,11 +200,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files) {
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
