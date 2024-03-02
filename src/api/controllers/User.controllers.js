@@ -25,7 +25,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const register = async (req, res, next) => {
-  let catchImg = req.file.path;
+  let catchImg = req.file?.path;
 
   try {
     await User.syncIndexes();
@@ -271,7 +271,7 @@ const checkCodeNewUser = async (req, res, next) => {
       return res.status(404).json("User not found");
     } else {
       console.log("184", confirmationCode, userExists.confirmationCode);
-      if (confirmationCode === userExists.confirmationCode) {
+      if (confirmationCode == userExists.confirmationCode) {
         console.log("186", confirmationCode, userExists.confirmationCode);
         try {
           await userExists.updateOne({ confirmationCodeChecked: true });
