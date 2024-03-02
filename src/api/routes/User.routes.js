@@ -16,7 +16,7 @@ UserRoutes.post("/login", login);
 UserRoutes.post("/login/autologin", autoLogin);
 
 UserRoutes.patch("/forgotpassword", forgotPassword);
-UserRoutes.patch("/sendPassword/:id", [isAuth], sendPassword);
+UserRoutes.patch("/sendPassword/:id", sendPassword);
 UserRoutes.patch("/changepassword", [isAuth], modifyPassword);
 
 UserRoutes.patch("/update/update", [isAuth], upload.single('image'), update);
