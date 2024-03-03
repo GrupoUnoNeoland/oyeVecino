@@ -66,22 +66,9 @@ const createRequest = async (req, res, next) => {
             await User.findByIdAndUpdate(req.user._id, {
               $push: { request: RequestSave._id },
             });
-            try {
-              await Neighborhood.findByIdAndUpdate(
-                req.user.neighborhoods[0]._id,
-                {
-                  $push: { requests: RequestSave._id },
-                }
-              );
-              return res.status(200).json({
-                dataUpdate: await Request.findById(RequestSave._id),
-              });
-            } catch (error) {
-              res.status(404).json({
-                error: "error update request key in neighborhood",
-                message: error.message,
-              }) && next(error);
-            }
+            return res.status(200).json({
+              dataUpdate: await Request.findById(RequestSave._id),
+            });
           } catch (error) {
             res.status(404).json({
               error: "error update user key in request",
