@@ -8,7 +8,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "oyeVecino",
-    allowedFormats: ["jpg", "png", "jpeg", "gif", "svg", "webp"],
+    allowedFormats: ["jpg", "png", "jpeg", "gif", "svg", "webp", "pdf"],
   },
 });
 
