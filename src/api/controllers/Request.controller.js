@@ -10,8 +10,8 @@ const Neighborhood = require("../models/Neighborhood.model");
 dotenv.config();
 
 const createRequest = async (req, res, next) => {
+  let catchDocument = req?.file?.path;
   try {
-    let catchDocument = req.file.path;
     await Request.syncIndexes();
 
     const requestExist = await Request.findOne({ user: req.user._id });
@@ -88,7 +88,7 @@ const createRequest = async (req, res, next) => {
       return res.status(409).json("this request already exists");
     }
   } catch (error) {
-    deleteImgCloudinary(catchDocument);
+    catchDocument && deleteImgCloudinary(catchDocument);
     return next(error);
   }
 };
