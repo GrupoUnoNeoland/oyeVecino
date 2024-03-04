@@ -2,6 +2,7 @@ const { isAuth, isAuthAdmin } = require("../../middleware/auth.middleware");
 const { upload } = require("../../middleware/files.middleware");
 const {
   createRequest,
+  updateRequest,
   deleteRequest,
   getByIdRequest,
   getAllRequest,
@@ -19,6 +20,7 @@ RequestRoutes.post(
   upload.single("document"),
   createRequest
 );
+RequestRoutes.patch("/update/:id", [isAuthAdmin], updateRequest);
 RequestRoutes.delete("/delete/:id", [isAuth], deleteRequest);
 RequestRoutes.get("/:id", [isAuthAdmin], getByIdRequest);
 RequestRoutes.get("/", [isAuth], getAllRequest);

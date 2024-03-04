@@ -92,6 +92,54 @@ const createRequest = async (req, res, next) => {
     return next(error);
   }
 };
+const updateRequest = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    await Request.syncIndexes();
+    const requestById = await Request.findById(id);
+
+    if (requestById) {
+      if (req.body.state == "accepted") {
+        requestById.state = "accepted";
+        try {
+          const requestUpdated = await Request.findByIdAndUpdate(
+            id,
+            requestById
+          );
+          return res
+            .status(200)
+            .json({
+              message: "Request updated to accepted",
+              request: requestUpdated,
+            });
+        } catch (error) {
+          return res.status(404).json("Request not updated");
+        }
+      } else if (req.body.state == "rejected") {
+        requestById.state = "rejected";
+        try {
+          const requestUpdated = await Request.findByIdAndUpdate(
+            id,
+            requestById
+          );
+          return res
+            .status(200)
+            .json({
+              message: "Request updated to rejected",
+              request: requestUpdated,
+            });
+        } catch (error) {
+          return res.status(404).json("Request not updated");
+        }
+      }
+    } else {
+      return res.status(404).json("Request not found");
+    }
+  } catch {
+    return res.status(404).json("Request not found");
+  }
+};
 
 const toggleUserInRequest = async (req, res, next) => {
   try {
@@ -135,7 +183,9 @@ const toggleUserInRequest = async (req, res, next) => {
                 $push: { requests: id },
               });
               return res.status(200).json({
-                dataUpdate: await Request.findById(id).populate("neighborhoods"),
+                dataUpdate: await Request.findById(id).populate(
+                  "neighborhoods"
+                ),
               });
             } catch (error) {
               res.status(404).json({
@@ -373,6 +423,7 @@ const getAllRequest = async (req, res, next) => {
 
 module.exports = {
   createRequest,
+  updateRequest,
   deleteRequest,
   getByIdRequest,
   getAllRequest,
