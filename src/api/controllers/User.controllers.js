@@ -543,6 +543,33 @@ const update = async (req, res, next) => {
   }
 };
 
+const updateAdressCheck = async (req, res, next) => {
+  const { id } = req.params;
+  const { state } = req.body
+
+  try {
+    await User.syncIndexes();
+    const userById = await User.findById(id);
+    // const newUser = { ...userById, adressChecked: state }
+    userById.adressChecked = state
+
+    if (userById) {
+      try {
+        await User.findByIdAndUpdate(id, userById);
+        return res.status(200).json({
+          dataUpdate: await User.findById(id),
+        });
+      } catch (error) {
+        return res.status(404).json({ message: "User not updated", error: error.message });
+      }
+    } else {
+      return res.status(404).json("User not found");
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const deleteUser = async (req, res, next) => {
   const { userId } = req.body;
   const isTheUserToDelete = req.user.rol === "vecino" && userId == req.user._id.toString()
@@ -704,11 +731,13 @@ const getById = async (req, res, next) => {
 };
 
 const toggleNeighborhood = async (req, res, next) => {
+  console.log("entrou")
   try {
     const { id } = req.params;
     const { neighborhoods } = req.body;
 
     const userById = await User.findById(id);
+    console.log("userById", userById)
 
     if (userById) {
       const arrayIdNeighborhoods = neighborhoods.split(",");
@@ -725,6 +754,7 @@ const toggleNeighborhood = async (req, res, next) => {
                 await Neighborhood.findByIdAndUpdate(neighborhood, {
                   $pull: { users: id },
                 });
+                return res.status(200).json(await User.findById(id))
               } catch (error) {
                 res.status(404).json({
                   error: "error update neighborhood",
@@ -1165,5 +1195,6 @@ module.exports = {
   toggleStatements,
   registerAdmin,
   toggleCity,
-  toggleRequestInUser
+  toggleRequestInUser,
+  updateAdressCheck
 };

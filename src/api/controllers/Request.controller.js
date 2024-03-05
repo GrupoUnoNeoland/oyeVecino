@@ -45,7 +45,7 @@ const createRequest = async (req, res, next) => {
             from: emailEnv,
             to: req.user.email,
             subject: "Validación de la documentación",
-            text: `Querido/a ${req.user.name}, tu petición está en proceso. En breve tendrás noticias de nuestro equipo sobre su acceso. Gracias por confiar en nosotros ${req.user.name}`,
+            text: `Querido/a ${req.user.name}, tu petición está en proceso. En breve tendrás noticias de nuestro equipo sobre su acceso. Gracias por confiar en nosotros!`,
           };
 
           transporter.sendMail(mailWaiting, function (error, info) {
@@ -107,6 +107,38 @@ const updateRequest = async (req, res, next) => {
             id,
             requestById
           );
+          const emailEnv = process.env.EMAIL;
+          const password = process.env.PASSWORD;
+
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: emailEnv,
+              pass: password,
+            },
+          });
+
+          const mailWaiting = {
+            from: emailEnv,
+            to: req.user.email,
+            subject: "Validación de la documentación",
+            text: `Querido/a ${req.user.name}, tu petición fue aprobada. Ya puedes disfrutar de Oye Vecino!`,
+          };
+
+          transporter.sendMail(mailWaiting, function (error, info) {
+            if (error) {
+              console.log(error);
+              return res.status(404).json({
+                request: RequestSave,
+                request: "error, send request",
+              });
+            }
+            console.log("Email sent: " + info.response);
+            return res.status(200).json({
+              request: RequestSave,
+              RequestSave,
+            });
+          });
           return res
             .status(200)
             .json({
@@ -123,6 +155,41 @@ const updateRequest = async (req, res, next) => {
             id,
             requestById
           );
+          const emailEnv = process.env.EMAIL;
+          const password = process.env.PASSWORD;
+
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: emailEnv,
+              pass: password,
+            },
+          });
+
+          const mailWaiting = {
+            from: emailEnv,
+            to: req.user.email,
+            subject: "Validación de la documentación",
+            text: `Querido/a ${req.user.name}, tu petición fue rechazada. Vuelve a hacer login y reenvia una documentación válida. Muchas gracias y disculpa las molestias!`,
+          };
+
+          transporter.sendMail(mailWaiting, function (error, info) {
+            if (error) {
+              console.log(error);
+              return res.status(404).json({
+                request: RequestSave,
+                request: "error, send request",
+              });
+            }
+            console.log("Email sent: " + info.response);
+            return res.status(200).json({
+              request: RequestSave,
+              RequestSave,
+            });
+          });
+
+
+
           return res
             .status(200)
             .json({
@@ -296,8 +363,7 @@ const toggleNeighborhoodInRequest = async (req, res, next) => {
 const toggleCityInRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const cityId = req.user.city[0];
-    console.log(cityId);
+    const { cityId } = req.body;
 
     const requestById = await Request.findById(id);
     console.log(requestById);

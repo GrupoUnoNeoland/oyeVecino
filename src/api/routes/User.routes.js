@@ -1,7 +1,7 @@
 const { isAuth, isAuthAdmin, isAuthSuperAdmin } = require("../../middleware/auth.middleware");
 const { upload } = require("../../middleware/files.middleware");
 const { register, resendCode, sendCode, checkCodeNewUser, login, autoLogin, forgotPassword, sendPassword, modifyPassword, update, deleteUser, getAll, getById, toggleNeighborhood, toggleOfferedService, toggleDemandedService, toggleStatements, registerAdmin, toggleCity,
-  toggleRequestInUser } = require("../controllers/User.controllers");
+  toggleRequestInUser, updateAdressCheck } = require("../controllers/User.controllers");
 const express = require("express");
 const UserRoutes = express.Router();
 
@@ -23,6 +23,7 @@ UserRoutes.patch("/update/update", [isAuth], upload.single('image'), update);
 UserRoutes.delete("/", [isAuth], deleteUser);
 UserRoutes.get("/", [isAuth], getAll);
 UserRoutes.get("/:id", [isAuth], getById);
+UserRoutes.patch("/update/adresscheck/:id", [isAuthAdmin], updateAdressCheck);
 
 UserRoutes.patch("/add/neighborhood/:id", [isAuthAdmin], toggleNeighborhood);
 UserRoutes.patch("/add/servicesoffered/:id", [isAuth], toggleOfferedService);
