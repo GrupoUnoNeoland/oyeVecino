@@ -512,9 +512,12 @@ const updateServices = async (req, res, next) => {
 const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const serviceById = await Service.findById(id).populate(
-      "provider comments neighborhoods starReview"
-    );
+    const serviceById = await Service.findById(id).populate([
+      {
+        path: "comments",
+        model: Message,
+        populate: "owner"
+      }]).populate("provider neighborhoods starReview");
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
@@ -526,8 +529,9 @@ const getByIdService = async (req, res, next) => {
 };
 
 const getAllServices = async (req, res, next) => {
+  const { type } = req.params
   try {
-    const allServices = await Service.find().populate(
+    const allServices = await Service.find({ type }).populate(
       "provider comments neighborhoods"
     );
     if (allServices.length > 0) {
