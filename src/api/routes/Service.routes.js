@@ -35,11 +35,11 @@ ServiceRoutes.patch(
   [isAuth],
   toggleUsersServiceDemanded
 );
+ServiceRoutes.get("/getbyid/:id", [isAuth], getByIdService);
+ServiceRoutes.get("/getall/:type", [isAuth], getAllServices);
 ServiceRoutes.get("/getallorder", [isAuth], getAllServicesStar);
 ServiceRoutes.patch("/add/neighborhoods/:id", [isAuth], toggleNeighborhoods);
 ServiceRoutes.patch("/add/city/:id", [isAuth], toggleCity);
-ServiceRoutes.get("/:id", [isAuth], getByIdService);
-ServiceRoutes.get("/", [isAuth], getAllServices);
 ServiceRoutes.get("/byName/:title", [isAuth], getByNameServices);
 ServiceRoutes.patch(
   "/update/service/:id",
