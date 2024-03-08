@@ -31,6 +31,16 @@ const createEvent = async (req, res, next) => {
       const EventSave = await newEvent.save();
 
       if (EventSave) {
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: { events: EventSave._id },
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update events in user",
+            message: error.message,
+          }) && next(error);
+        }
         return res.status(200).json({
           service: EventSave,
         });

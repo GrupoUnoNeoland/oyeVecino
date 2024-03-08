@@ -31,6 +31,16 @@ const createStatement = async (req, res, next) => {
       const StatementSave = await newStatement.save();
 
       if (StatementSave) {
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: { statements: StatementSave._id },
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update statement in user",
+            message: error.message,
+          }) && next(error);
+        }
         return res.status(200).json({
           service: StatementSave,
         });
