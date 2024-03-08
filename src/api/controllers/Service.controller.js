@@ -6,14 +6,27 @@ const Message = require("../models/Message.model");
 const Rating = require("../models/Rating.model");
 
 const createServices = async (req, res, next) => {
-  let catchImgs = req?.files?.map((file) => file.path);
+  let catchImgs = [];
+  if (req.files.length > 0) {
+    catchImgs = req?.files?.map((file) => file.path);
+  } else {
+    catchImgs = [
+      "https://res.cloudinary.com/dqiveomlb/image/upload/v1709294539/APP/cambio_dr9mqv.png",
+    ];
+  }
 
   try {
     await Service.syncIndexes();
 
     // const ServiceExist = await Service.findOne({ title: req.body.title });
     // if (!ServiceExist) {
-    const newService = new Service({ ...req.body, city: req.user.city[0], neighborhoods: req.user.neighborhoods[0], provider: req.user._id, images: catchImgs });
+    const newService = new Service({
+      ...req.body,
+      city: req.user.city[0],
+      neighborhoods: req.user.neighborhoods[0],
+      provider: req.user._id,
+      images: catchImgs,
+    });
 
     try {
       const ServiceSave = await newService.save();
@@ -488,11 +501,11 @@ const updateServices = async (req, res, next) => {
         console.log(updateService.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -512,12 +525,15 @@ const updateServices = async (req, res, next) => {
 const getByIdService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const serviceById = await Service.findById(id).populate([
-      {
-        path: "comments",
-        model: Message,
-        populate: "owner"
-      }]).populate("provider neighborhoods starReview");
+    const serviceById = await Service.findById(id)
+      .populate([
+        {
+          path: "comments",
+          model: Message,
+          populate: "owner",
+        },
+      ])
+      .populate("provider neighborhoods starReview");
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
@@ -529,7 +545,7 @@ const getByIdService = async (req, res, next) => {
 };
 
 const getAllServices = async (req, res, next) => {
-  const { type } = req.params
+  const { type } = req.params;
   try {
     const allServices = await Service.find({ type }).populate(
       "provider comments neighborhoods"
