@@ -6,8 +6,14 @@ const Neighborhood = require("../models/Neighborhood.model.js");
 const User = require("../models/User.model");
 
 const createEvent = async (req, res, next) => {
-  let catchImgs = req?.files?.map((file) => file.path);
-
+  let catchImgs = [];
+  if (req.files.length > 0) {
+    catchImgs = req?.files?.map((file) => file.path);
+  } else {
+    catchImgs = [
+      "https://res.cloudinary.com/dqiveomlb/image/upload/v1709843092/APP/EVENTO%20DEFAULT.gif",
+    ];
+  }
   try {
     await Event.syncIndexes();
 
@@ -18,7 +24,7 @@ const createEvent = async (req, res, next) => {
       images: catchImgs,
       organizer: req.user._id,
       city: req.user.city[0],
-      neighborhoods: req.user.neighborhoods[0]
+      neighborhoods: req.user.neighborhoods[0],
     });
 
     try {
@@ -209,11 +215,11 @@ const updateEvent = async (req, res, next) => {
         console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
