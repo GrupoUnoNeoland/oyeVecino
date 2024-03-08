@@ -6,14 +6,26 @@ const Statement = require("../models/Statement.model");
 const User = require("../models/User.model");
 
 const createStatement = async (req, res, next) => {
-  let catchImgs = req?.files?.map((file) => file.path);
-
+  let catchImgs = [];
+  if (req.files.length > 0) {
+    catchImgs = req?.files?.map((file) => file.path);
+  } else {
+    catchImgs = [
+      "https://res.cloudinary.com/dqiveomlb/image/upload/v1709841878/APP/COMUNICADO%20DEFAULT.jpg",
+    ];
+  }
   try {
     await Statement.syncIndexes();
 
     // const StatementExist = await Statement.findOne({ title: req.body.title });
     // if (!StatementExist) {
-    const newStatement = new Statement({ ...req.body, city: req.user.city[0], neighborhoods: req.user.neighborhoods[0], owner: req.user._id, images: catchImgs });
+    const newStatement = new Statement({
+      ...req.body,
+      city: req.user.city[0],
+      neighborhoods: req.user.neighborhoods[0],
+      owner: req.user._id,
+      images: catchImgs,
+    });
 
     try {
       const StatementSave = await newStatement.save();
@@ -200,11 +212,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files) {
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
