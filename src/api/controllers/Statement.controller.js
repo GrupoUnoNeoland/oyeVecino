@@ -1,5 +1,4 @@
 const { deleteImgCloudinary } = require("../../middleware/files.middleware");
-const Like = require("../models/Like.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Statement = require("../models/Statement.model");
@@ -81,35 +80,18 @@ const deleteStatement = async (req, res, next) => {
           { statementsFav: id },
           { $pull: { statementsFav: id } }
         );
-
         try {
           await Neighborhood.updateMany(
             { statements: id },
             { $pull: { statements: id } }
           );
-
           await Message.deleteMany({ recipientStatement: id });
           try {
             await User.updateOne(
               { statements: id },
               { $pull: { statements: id } }
             );
-            /*try {
-                await User.updateMany(
-                  { statementsComments: statementMessage._id },
-                  { $pull: { statementsComments: statementMessage._id } }
-                );*/
-            try {
-              await Like.deleteMany({ statement: statementDelete._id });
-              return res.status(200).json("likes deleted ok from statements");
-            } catch (error) {
-              return res.status(404).json("likes not deleted");
-            }
-            /*} catch (error) {
-                return res
-                  .status(404)
-                  .json("statementsComments not deleted from user");
-              }*/
+            return res.status(200).json("likes deleted ok from statements");
           } catch (error) {
             return res.status(404).json("statement not updated from user");
           }
@@ -167,7 +149,7 @@ const getByIdStatement = async (req, res, next) => {
   try {
     const { id } = req.params;
     const statementById = await Statement.findById(id).populate(
-      "comments likes owner neighborhoods"
+      "comments owner neighborhoods likes"
     );
     if (statementById) {
       return res.status(200).json(statementById);
@@ -222,11 +204,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files) {
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -447,6 +429,81 @@ const toggleCity = async (req, res, next) => {
   }
 };
 
+const toggleLike = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const likes = req.body.statementsFav;
+    console.log(req.body);
+    const statementById = await Statement.findById(id);
+    if (statementById) {
+      const arrayIdUser = likes.split(",");
+
+      await Promise.all(
+        arrayIdUser.map(async (like) => {
+          if (statementById.likes.includes(like)) {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $pull: { likes: like },
+              });
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $pull: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update statement",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          } else {
+            try {
+              await Statement.findByIdAndUpdate(id, {
+                $push: { likes: like },
+              });
+              try {
+                await User.findByIdAndUpdate(like, {
+                  $push: { eventsFav: id },
+                });
+              } catch (error) {
+                res.status(404).json({
+                  error: "error update events",
+                  message: error.message,
+                }) && next(error);
+              }
+            } catch (error) {
+              res.status(404).json({
+                error: "error update likes",
+                message: error.message,
+              }) && next(error);
+            }
+          }
+        })
+      )
+        .catch((error) => res.status(404).json({ error: error.message }))
+        .then(async () => {
+          return res.status(200).json({
+            dataUpdate: await Statement.findById(id).populate("likes"),
+          });
+        });
+    } else {
+      return res.status(404).json("statement not found");
+    }
+  } catch (error) {
+    return (
+      res.status(404).json({
+        error: "error catch",
+        message: error.message,
+      }) && next(error)
+    );
+  }
+};
+
 module.exports = {
   createStatement,
   deleteStatement,
@@ -457,4 +514,5 @@ module.exports = {
   updateStatement,
   getAllStatementLike,
   toggleCity,
+  toggleLike
 };

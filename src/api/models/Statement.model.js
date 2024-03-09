@@ -21,7 +21,7 @@ const statementSchema = new mongoose.Schema(
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "City" }],
     },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     owner: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     neighborhoods: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Neighborhood" },

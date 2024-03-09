@@ -2,7 +2,6 @@ const { deleteImgCloudinary } = require("../../middleware/files.middleware");
 const Chat = require("../models/Chat.model");
 const City = require("../models/City.model");
 const Event = require("../models/Event.model");
-const Like = require("../models/Like.model");
 const Message = require("../models/Message.model");
 const Neighborhood = require("../models/Neighborhood.model");
 const Rating = require("../models/Rating.model");
@@ -87,11 +86,11 @@ const updateCity = async (req, res, next) => {
         console.log(updateCity.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-              image: true,
-            })
+            image: true,
+          })
           : testUpdate.push({
-              image: false,
-            });
+            image: false,
+          });
       }
 
       return res.status(200).json({
@@ -276,25 +275,20 @@ const deleteCity = async (req, res, next) => {
                   try {
                     await Request.deleteMany({ city: id });
                     try {
-                      await Like.deleteMany({ city: id });
+                      await Message.deleteMany({ city: id });
                       try {
-                        await Message.deleteMany({ city: id });
+                        await Rating.deleteMany({ city: id });
                         try {
-                          await Rating.deleteMany({ city: id });
-                          try {
-                            await Chat.deleteMany({ city: id });
-                            return res.status(200).json("city deleted ok");
-                          } catch (error) {
-                            return res.status(200).json("all chats deleted");
-                          }
+                          await Chat.deleteMany({ city: id });
+                          return res.status(200).json("city deleted ok");
                         } catch (error) {
-                          return res.status(200).json("all request deleted");
+                          return res.status(200).json("all chats deleted");
                         }
                       } catch (error) {
-                        return res.status(404).json("messages not deleted");
+                        return res.status(200).json("all request deleted");
                       }
                     } catch (error) {
-                      return res.status(404).json("likes not deleted");
+                      return res.status(404).json("messages not deleted");
                     }
                   } catch (error) {
                     return res.status(404).json("requests not deleted");

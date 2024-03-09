@@ -10,7 +10,6 @@ const Request = require("../models/Request.model");
 const Message = require("../models/Message.model");
 const Rating = require("../models/Rating.model");
 const Chat = require("../models/Chat.model");
-const Like = require("../models/Like.model");
 
 const randomCode = require("../../utils/randomCode");
 const { generateToken } = require("../../utils/token");
@@ -606,27 +605,20 @@ const deleteUser = async (req, res, next) => {
                     try {
                       await Statement.deleteMany({ owner: userId });
                       try {
-                        await Like.deleteMany({ userLike: userId });
+                        await Rating.deleteMany({ userServiceProvider: userId });
                         try {
-                          await Rating.deleteMany({ userServiceProvider: userId });
+                          await Rating.deleteMany({ userServiceTaker: userId });
                           try {
-                            await Rating.deleteMany({ userServiceTaker: userId });
+                            await Chat.deleteMany({ userOne: userId });
                             try {
-                              await Chat.deleteMany({ userOne: userId });
+                              await Chat.deleteMany({ userTwo: userId });
                               try {
-                                await Chat.deleteMany({ userTwo: userId });
-                                try {
-                                  await Request.deleteMany({ user: userId });
-                                  return res.status(200).json("user deleted ok");
-                                } catch (error) {
-                                  return res
-                                    .status(404)
-                                    .json("request not deleted");
-                                }
+                                await Request.deleteMany({ user: userId });
+                                return res.status(200).json("user deleted ok");
                               } catch (error) {
                                 return res
                                   .status(404)
-                                  .json("chat not deleted");
+                                  .json("request not deleted");
                               }
                             } catch (error) {
                               return res
@@ -636,7 +628,7 @@ const deleteUser = async (req, res, next) => {
                           } catch (error) {
                             return res
                               .status(404)
-                              .json("user ratings not deleted");
+                              .json("chat not deleted");
                           }
                         } catch (error) {
                           return res
@@ -646,7 +638,7 @@ const deleteUser = async (req, res, next) => {
                       } catch (error) {
                         return res
                           .status(404)
-                          .json({ message: "user likes not deleted", error: error.message });
+                          .json("user ratings not deleted");
                       }
                     } catch (error) {
                       return res
