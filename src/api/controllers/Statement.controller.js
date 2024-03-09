@@ -148,9 +148,15 @@ const getAllStatement = async (req, res, next) => {
 const getByIdStatement = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const statementById = await Statement.findById(id).populate(
-      "comments owner neighborhoods likes"
-    );
+    const statementById = await Statement.findById(id)
+      .populate([
+        {
+          path: "comments",
+          model: Message,
+          populate: "owner",
+        },
+      ])
+      .populate("owner neighborhoods likes");
     if (statementById) {
       return res.status(200).json(statementById);
     } else {
@@ -204,11 +210,11 @@ const updateStatement = async (req, res, next) => {
       if (req.files) {
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -436,7 +442,7 @@ const toggleLike = async (req, res, next) => {
     console.log(req.body);
     const statementById = await Statement.findById(id);
     if (statementById) {
-      const arrayIdUser = likes.split(",");
+      const arrayIdUser = likes?.split(",");
 
       await Promise.all(
         arrayIdUser.map(async (like) => {
@@ -447,7 +453,7 @@ const toggleLike = async (req, res, next) => {
               });
               try {
                 await User.findByIdAndUpdate(like, {
-                  $pull: { eventsFav: id },
+                  $pull: { statementsFav: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -468,7 +474,7 @@ const toggleLike = async (req, res, next) => {
               });
               try {
                 await User.findByIdAndUpdate(like, {
-                  $push: { eventsFav: id },
+                  $push: { statementsFav: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -514,5 +520,5 @@ module.exports = {
   updateStatement,
   getAllStatementLike,
   toggleCity,
-  toggleLike
+  toggleLike,
 };

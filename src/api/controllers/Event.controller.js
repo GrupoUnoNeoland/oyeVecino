@@ -154,9 +154,15 @@ const getAllEvent = async (req, res, next) => {
 const getByIdEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const eventById = await Event.findById(id).populate(
-      "comments likes neighborhoods sponsors organizer"
-    );
+    const eventById = await Event.findById(id)
+      .populate([
+        {
+          path: "comments",
+          model: Message,
+          populate: "owner",
+        },
+      ])
+      .populate(" likes neighborhoods sponsors organizer");
     if (eventById) {
       return res.status(200).json(eventById);
     } else {
@@ -209,11 +215,11 @@ const updateEvent = async (req, res, next) => {
         console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
