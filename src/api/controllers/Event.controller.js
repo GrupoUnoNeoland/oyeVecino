@@ -155,7 +155,7 @@ const getByIdEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
     const eventById = await Event.findById(id).populate(
-      "comments likes neighborhoods sponsors"
+      "comments likes neighborhoods sponsors organizer"
     );
     if (eventById) {
       return res.status(200).json(eventById);
