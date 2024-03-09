@@ -447,7 +447,7 @@ const toggleLike = async (req, res, next) => {
               });
               try {
                 await User.findByIdAndUpdate(like, {
-                  $pull: { eventsFav: id },
+                  $pull: { statmentFav: id },
                 });
               } catch (error) {
                 res.status(404).json({
@@ -468,7 +468,7 @@ const toggleLike = async (req, res, next) => {
               });
               try {
                 await User.findByIdAndUpdate(like, {
-                  $push: { eventsFav: id },
+                  $push: { statementsFav: id },
                 });
               } catch (error) {
                 res.status(404).json({
