@@ -162,7 +162,7 @@ const getByIdEvent = async (req, res, next) => {
           populate: "owner",
         },
       ])
-      .populate(" likes neighborhoods sponsors organizer");
+      .populate("likes neighborhoods sponsors organizer");
     if (eventById) {
       return res.status(200).json(eventById);
     } else {
