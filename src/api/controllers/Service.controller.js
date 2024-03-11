@@ -31,10 +31,34 @@ const createServices = async (req, res, next) => {
     try {
       const ServiceSave = await newService.save();
 
-      if (ServiceSave) {
-        return res.status(200).json({
-          service: ServiceSave,
-        });
+      if (ServiceSave.type == "offered") {
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: { servicesOffered: ServiceSave._id },
+          });
+          return res.status(200).json({
+            service: ServiceSave,
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update service in user",
+            message: error.message,
+          }) && next(error);
+        }
+      } else if (ServiceSave.type == "demanded") {
+        try {
+          await User.findByIdAndUpdate(req.user._id, {
+            $push: { servicesDemanded: ServiceSave._id },
+          });
+          return res.status(200).json({
+            service: ServiceSave,
+          });
+        } catch (error) {
+          res.status(404).json({
+            error: "error update service in user",
+            message: error.message,
+          }) && next(error);
+        }
       } else {
         return res.status(404).json("service not saved");
       }
@@ -461,16 +485,22 @@ const toggleCity = async (req, res, next) => {
 
 //-------------- UPDATE
 const updateServices = async (req, res, next) => {
-  let catchImg = req.files.map((file) => file.path);
-  console.log(req.files);
   const { id } = req.params;
+  let catchImgs = [];
+  if (req.files.length > 0) {
+    catchImgs = req?.files?.map((file) => file.path);
+  } else {
+    catchImgs = [
+      "https://res.cloudinary.com/dqiveomlb/image/upload/v1709294539/APP/cambio_dr9mqv.png",
+    ];
+  }
 
   try {
     await Service.syncIndexes();
 
     const patchService = new Service(req.body);
 
-    req.files && (patchService.images = catchImg);
+    req.files && (patchService.images = catchImgs);
 
     try {
       const serviceToUpdate = await Service.findById(id);
@@ -498,8 +528,8 @@ const updateServices = async (req, res, next) => {
       });
 
       if (req.files) {
-        console.log(updateService.images, catchImg);
-        catchImg.length > 0
+        console.log(updateService.images, catchImgs);
+        catchImgs.length > 0
           ? testUpdate.push({
               image: true,
             })
@@ -513,11 +543,11 @@ const updateServices = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
+      req.files && catchImgs.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
+    req.files && catchImgs.forEach((image) => deleteImgCloudinary(image));
     return next(error);
   }
 };
