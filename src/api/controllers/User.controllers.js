@@ -20,7 +20,6 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 
-
 dotenv.config();
 
 const register = async (req, res, next) => {
@@ -467,7 +466,7 @@ const modifyPassword = async (req, res, next) => {
 };
 
 const update = async (req, res, next) => {
-  let catchImg = req.file.path;
+  let catchImg = req?.file?.path;
 
   try {
     await User.syncIndexes();
@@ -483,6 +482,22 @@ const update = async (req, res, next) => {
     patchUser.email = req.user.email;
     patchUser.confirmationCodeChecked = req.user.confirmationCodeChecked;
     patchUser.cif = req.user.cif;
+    patchUser.request = req.user.request;
+    patchUser.openingTime = req.user.openingTime;
+    patchUser.closingTime = req.user.closingTime;
+    patchUser.points = req.user.statements;
+    patchUser.city = req.user.points;
+    patchUser.neighborhoods = req.user.statements;
+    patchUser.servicesOffered = req.user.servicesOffered;
+    patchUser.servicesDemanded = req.user.servicesDemanded;
+    patchUser.receivedMessages = req.user.receivedMessages;
+    patchUser.postedMessages = req.user.postedMessages;
+    patchUser.chats = req.user.chats;
+    patchUser.statements = req.user.statements;
+    patchUser.eventsFav = req.user.eventsFav;
+    patchUser.statementsFav = req.user.statementsFav;
+    patchUser.sponsoredEvents = req.user.sponsoredEvents;
+    patchUser.events = req.user.statementsFav;
 
     if (req.body?.gender) {
       const resultEnum = enumOk(req.body?.gender);
@@ -492,7 +507,7 @@ const update = async (req, res, next) => {
     try {
       await User.findByIdAndUpdate(req.user._id, patchUser);
 
-      req.file && deleteImgCloudinary(req.user.image);
+      req?.file && deleteImgCloudinary(req.user.image);
 
       const updateUser = await User.findById(req.user._id);
 
@@ -518,14 +533,14 @@ const update = async (req, res, next) => {
         }
       });
 
-      if (req.file.path) {
+      if (req?.file?.path) {
         updateUser.image === catchImg
           ? testUpdate.push({
-            image: true,
-          })
+              image: true,
+            })
           : testUpdate.push({
-            image: false,
-          });
+              image: false,
+            });
       }
 
       return res.status(200).json({
@@ -533,24 +548,24 @@ const update = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      req.file.path && deleteImgCloudinary(catchImg);
+      req?.file?.path && deleteImgCloudinary(catchImg);
       return res.status(404).json(error.message);
     }
   } catch (error) {
-    req.file.path && deleteImgCloudinary(catchImg);
+    req?.file?.path && deleteImgCloudinary(catchImg);
     return next(error);
   }
 };
 
 const updateAdressCheck = async (req, res, next) => {
   const { id } = req.params;
-  const { state } = req.body
+  const { state } = req.body;
 
   try {
     await User.syncIndexes();
     const userById = await User.findById(id);
     // const newUser = { ...userById, adressChecked: state }
-    userById.adressChecked = state
+    userById.adressChecked = state;
 
     if (userById) {
       try {
@@ -559,7 +574,9 @@ const updateAdressCheck = async (req, res, next) => {
           dataUpdate: await User.findById(id),
         });
       } catch (error) {
-        return res.status(404).json({ message: "User not updated", error: error.message });
+        return res
+          .status(404)
+          .json({ message: "User not updated", error: error.message });
       }
     } else {
       return res.status(404).json("User not found");
@@ -570,14 +587,16 @@ const updateAdressCheck = async (req, res, next) => {
 };
 
 const deleteUser = async (req, res, next) => {
-  const { userId } = req.body;
-  const isTheUserToDelete = req.user.rol === "vecino" && userId == req.user._id.toString()
+  const { userId } = req.params;
+  console.log("qué soy?:", req.body);
+  const isTheUserToDelete =
+    req.user.rol === "vecino" && userId == req.user._id.toString();
 
   const isAdmin = req.user.rol === "admin";
   if (isTheUserToDelete || isAdmin) {
     try {
       const userDelete = await User.findById(userId);
-      const image = userDelete.image
+      const image = userDelete.image;
       try {
         const userDeleted = await User.findByIdAndDelete(userId);
         if (!userDeleted) {
@@ -605,7 +624,9 @@ const deleteUser = async (req, res, next) => {
                     try {
                       await Statement.deleteMany({ owner: userId });
                       try {
-                        await Rating.deleteMany({ userServiceProvider: userId });
+                        await Rating.deleteMany({
+                          userServiceProvider: userId,
+                        });
                         try {
                           await Rating.deleteMany({ userServiceTaker: userId });
                           try {
@@ -621,14 +642,10 @@ const deleteUser = async (req, res, next) => {
                                   .json("request not deleted");
                               }
                             } catch (error) {
-                              return res
-                                .status(404)
-                                .json("chat not deleted");
+                              return res.status(404).json("chat not deleted");
                             }
                           } catch (error) {
-                            return res
-                              .status(404)
-                              .json("chat not deleted");
+                            return res.status(404).json("chat not deleted");
                           }
                         } catch (error) {
                           return res
@@ -636,9 +653,7 @@ const deleteUser = async (req, res, next) => {
                             .json("user ratings not deleted");
                         }
                       } catch (error) {
-                        return res
-                          .status(404)
-                          .json("user ratings not deleted");
+                        return res.status(404).json("user ratings not deleted");
                       }
                     } catch (error) {
                       return res
@@ -646,9 +661,7 @@ const deleteUser = async (req, res, next) => {
                         .json("user statements not deleted");
                     }
                   } catch (error) {
-                    return res
-                      .status(404)
-                      .json("user services not deleted");
+                    return res.status(404).json("user services not deleted");
                   }
                 } catch (error) {
                   return res
@@ -661,15 +674,13 @@ const deleteUser = async (req, res, next) => {
                   .json("user organizer events not deleted");
               }
             } catch (error) {
-              return res
-                .status(404)
-                .json("user posted messages not deleted");
+              return res.status(404).json("user posted messages not deleted");
             }
-
           } catch (error) {
-            return res
-              .status(404)
-              .json({ message: "user received messages not deleted", error: error.message });
+            return res.status(404).json({
+              message: "user received messages not deleted",
+              error: error.message,
+            });
           }
         } catch (error) {
           return res.status(404).json("users key not updated in neighborhood");
@@ -692,9 +703,7 @@ const getAll = async (req, res, next) => {
     );
 
     if (allUser.length > 0) {
-      return res
-        .status(200)
-        .json(await User.find());
+      return res.status(200).json(await User.find());
     } else {
       return res.status(404).json("users no found");
     }
@@ -710,7 +719,7 @@ const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const usersById = await User.findById(id).populate(
-      "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents"
+      "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents events"
     );
     if (usersById) {
       return res.status(200).json(usersById);
@@ -723,13 +732,11 @@ const getById = async (req, res, next) => {
 };
 
 const toggleNeighborhood = async (req, res, next) => {
-  console.log("entrou")
   try {
     const { id } = req.params;
     const { neighborhoods } = req.body;
 
     const userById = await User.findById(id);
-    console.log("userById", userById)
 
     if (userById) {
       const arrayIdNeighborhoods = neighborhoods.split(",");
@@ -746,7 +753,7 @@ const toggleNeighborhood = async (req, res, next) => {
                 await Neighborhood.findByIdAndUpdate(neighborhood, {
                   $pull: { users: id },
                 });
-                return res.status(200).json(await User.findById(id))
+                return res.status(200).json(await User.findById(id));
               } catch (error) {
                 res.status(404).json({
                   error: "error update neighborhood",
@@ -1188,5 +1195,5 @@ module.exports = {
   registerAdmin,
   toggleCity,
   toggleRequestInUser,
-  updateAdressCheck
+  updateAdressCheck,
 };
