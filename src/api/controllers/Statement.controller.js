@@ -310,7 +310,6 @@ const toggleUser = async (req, res, next) => {
 };
 
 const toggleNeighborhood = async (req, res, next) => {
-  1;
   try {
     const { id } = req.params;
     const { neighborhoods } = req.body;
