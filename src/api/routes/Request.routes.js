@@ -23,12 +23,12 @@ RequestRoutes.post(
 RequestRoutes.patch("/update/:id", [isAuthAdmin], updateRequest);
 RequestRoutes.delete("/delete/:id", [isAuth], deleteRequest);
 RequestRoutes.get("/:id", [isAuthAdmin], getByIdRequest);
-RequestRoutes.get("/", [isAuth], getAllRequest);
-RequestRoutes.patch("/add/user/:id", [isAuth], toggleUserInRequest);
-RequestRoutes.patch("/add/city/:id", [isAuth], toggleCityInRequest);
+RequestRoutes.get("/", [isAuthAdmin], getAllRequest);
+RequestRoutes.patch("/add/user/:id", [isAuthAdmin], toggleUserInRequest);
+RequestRoutes.patch("/add/city/:id", [isAuthAdmin], toggleCityInRequest);
 RequestRoutes.patch(
   "/add/neighborhood/:id",
-  [isAuth],
+  [isAuthAdmin],
   toggleNeighborhoodInRequest
 );
 
