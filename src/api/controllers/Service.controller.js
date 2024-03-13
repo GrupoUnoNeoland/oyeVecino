@@ -563,7 +563,14 @@ const getByIdService = async (req, res, next) => {
           populate: "owner",
         },
       ])
-      .populate("provider neighborhoods starReview");
+      .populate([
+        {
+          path: "starReview",
+          model: Rating,
+          populate: "userServiceTaker",
+        },
+      ])
+      .populate("provider neighborhoods");
     if (serviceById) {
       return res.status(200).json(serviceById);
     } else {
