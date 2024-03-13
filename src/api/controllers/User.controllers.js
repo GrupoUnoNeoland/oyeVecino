@@ -718,9 +718,17 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const usersById = await User.findById(id).populate(
-      "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages chats statements eventsFav statementsFav sponsoredEvents events"
-    );
+    const usersById = await User.findById(id)
+      .populate([
+        {
+          path: "chats",
+          model: Chat,
+          populate: "messages userOne userTwo",
+        },
+      ])
+      .populate(
+        "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages statements eventsFav statementsFav sponsoredEvents events"
+      );
     if (usersById) {
       return res.status(200).json(usersById);
     } else {
