@@ -5,25 +5,29 @@ const Service = require("../models/Service.model");
 const createRating = async (req, res, next) => {
   try {
     await Rating.syncIndexes();
-    const service = await Service.findById(req.body.serviceId);
-    const userServiceProvider = service.provider[0];
+    const service = await Service.findById(req?.body?.serviceId);
+
+    const userServiceProvider = service?.provider[0];
 
     const customBody = {
-      stars: req.body?.stars,
+      stars: req.body.stars,
       userServiceTaker: req.user._id,
       userServiceProvider: userServiceProvider,
       service: req.body.serviceId,
       city: req.user.city[0],
-      neighborhoods: req.user.neighborhoods[0]
+      neighborhoods: req.user.neighborhoods[0],
     };
 
+    const isRatingExist = service?.starReview?.find(
+      (rating) => rating.userServiceTaker[0]._id == req.user._id
+    );
     const isTheSameUser =
       req.user._id.toString() == userServiceProvider.toString();
-    console.log(isTheSameUser);
-    if (!isTheSameUser) {
+
+    if (!isTheSameUser && !isRatingExist) {
       const newRating = new Rating(customBody);
       const savedRating = await newRating.save();
-      console.log("savedRating", savedRating);
+
       if (savedRating) {
         try {
           console.log(customBody.stars);
