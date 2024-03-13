@@ -323,7 +323,7 @@ const login = async (req, res, next) => {
           token,
         });
       } else {
-        return res.status(404).json("password dont match");
+        return res.status(404).json("password doesn't match");
       }
     } else {
       return res.status(404).json("User no register");
