@@ -727,7 +727,7 @@ const getById = async (req, res, next) => {
         },
       ])
       .populate(
-        "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages statements eventsFav statementsFav sponsoredEvents events"
+        "neighborhoods servicesOffered servicesDemanded receivedMessages postedMessages statements eventsFav statementsFav sponsoredEvents events city"
       );
     if (usersById) {
       return res.status(200).json(usersById);
