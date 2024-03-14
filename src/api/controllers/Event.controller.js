@@ -174,7 +174,7 @@ const getByIdEvent = async (req, res, next) => {
 };
 
 const updateEvent = async (req, res, next) => {
-  let catchImg = req.files.map((file) => file.path);
+  let catchImg = req.files && req.files.map((file) => file.path);
 
   const { id } = req.params;
 
@@ -183,13 +183,17 @@ const updateEvent = async (req, res, next) => {
 
     const patchEvent = new Event(req.body);
 
-    req.files && (patchEvent.images = catchImg);
+    req.files.length > 0 && (patchEvent.images = catchImg);
     console.log(patchEvent.images);
 
     try {
       const eventToUpdate = await Event.findById(id);
-      console.log("eventToUpdate", eventToUpdate);
-      req.files &&
+
+      req.files.length > 0
+        ? (patchEvent.images = catchImg)
+        : (patchEvent.images = eventToUpdate?.images);
+
+      req.files.length > 0 &&
         eventToUpdate.images.forEach((image) => deleteImgCloudinary(image));
       patchEvent._id = eventToUpdate._id;
       await Event.findByIdAndUpdate(id, patchEvent);
@@ -199,7 +203,6 @@ const updateEvent = async (req, res, next) => {
       const testUpdate = [];
 
       updateKeys.forEach((item) => {
-        console.log(updateEvent[item], req.body[item]);
         if (eventToUpdate[item] !== req.body[item]) {
           testUpdate.push({
             [item]: true,
@@ -212,7 +215,6 @@ const updateEvent = async (req, res, next) => {
       });
 
       if (req.files) {
-        console.log(updateEvent.images, catchImg);
         catchImg.length > 0
           ? testUpdate.push({
               image: true,
@@ -227,7 +229,6 @@ const updateEvent = async (req, res, next) => {
         testUpdate,
       });
     } catch (error) {
-      console.log("hola");
       req.files && catchImg.forEach((image) => deleteImgCloudinary(image));
       return res.status(404).json(error.message);
     }
