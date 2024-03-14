@@ -178,10 +178,10 @@ const updateStatement = async (req, res, next) => {
     const patchStatement = new Statement(req.body);
 
     req.files.length > 0 && (patchStatement.images = catchImg);
-    console.log("patchStatement", patchStatement);
+
     try {
       const statementToUpdate = await Statement.findById(id);
-      console.log("statementToUpdate", statementToUpdate);
+
       req.files.length > 0
         ? (patchStatement.images = catchImg)
         : (patchStatement.images = statementToUpdate?.images);
