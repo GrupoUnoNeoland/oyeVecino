@@ -27,13 +27,13 @@ StatementRoutes.get("/:id", [isAuth], getByIdStatement);
 StatementRoutes.post(
   "/create",
   [isAuth],
-  upload.array("images", 5),
+  upload.any("images"),
   createStatement
 );
 StatementRoutes.patch(
   "/update/statement/:id",
   [isAuth],
-  upload.array("images", 5),
+  upload.any("images"),
   updateStatement
 );
 

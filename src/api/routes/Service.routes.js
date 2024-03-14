@@ -18,12 +18,7 @@ const {
 const express = require("express");
 
 const ServiceRoutes = express.Router();
-ServiceRoutes.post(
-  "/create",
-  [isAuth],
-  upload.array("images", 5),
-  createServices
-);
+ServiceRoutes.post("/create", [isAuth], upload.any("images"), createServices);
 ServiceRoutes.delete("/delete/:id", [isAuth], deleteServices);
 ServiceRoutes.patch(
   "/add/users/serviceoffered/:id",
@@ -43,7 +38,7 @@ ServiceRoutes.patch("/add/city/:id", [isAuth], toggleCity);
 ServiceRoutes.get("/byName/:title", [isAuth], getByNameServices);
 ServiceRoutes.patch(
   "/update/service/:id",
-  upload.array("images", 5),
+  upload.any("images"),
   [isAuth],
   updateServices
 );
